@@ -80,11 +80,17 @@ def generate(param: pd.Series) -> List[interp1d]:
     om_ma = om_m / (om_m + (1-om_m)*a**3)
     alphaB = alphaB0*(1-om_ma) / (1-om_m)
     alphaM = alphaM0*(1-om_ma) / (1-om_m)
-
+    HdotbyH2 = -1.5*om_ma
+    H = param["H0"]*E_array
+    rhom = param["aexp"]**3 * param["unit_d"] # Check: this is rho_m at a = 1?
+    
     Ia = np.exp(cumulative_trapezoid(y=alphaM,x=lna),initial=0)
     Ma = np.sqrt(Ia/(4*np.pi*G)) # this is M(a), check units and conventions, where is G
 
-    # To add: possibly C2, C4  for fast compute
+    C2 = -alphaM + alphaB*(1 + alphaM) + (1 + alphaB)*HdotbyH2 + (3*a**3*alphaB0*om_m)/(a**3*(1 - om_m) + om_m)**2 + rhom/(2*H**2*Ma**2)
+    C4 = -4*alphaB + 2*alphaM
+
+    
 
     logging.warning(
         f"Write table in: {param['base']}/evolution_table_pysco_{param['extra']}.txt"
@@ -107,9 +113,11 @@ def generate(param: pd.Series) -> List[interp1d]:
             np.interp(lna, lnaexp_growth, f3c),
             alphaB,
             alphaM,
-            Ma
+            Ma,
+            C2,
+            C4
         ],
-        header="aexp, H/H0, t_supercomoving, dplus1, f1, dplus2, f2, dplus3a, f3a, dplus3b, f3b, dplus3c, f3c, alphaB, alphaM, M(a)",
+        header="aexp, H/H0, t_supercomoving, dplus1, f1, dplus2, f2, dplus3a, f3a, dplus3b, f3b, dplus3c, f3c, alphaB, alphaM, M(a), C2, C4",
     )
     return [
         interp1d(t_supercomoving, lna, fill_value="extrapolate"),
@@ -127,7 +135,9 @@ def generate(param: pd.Series) -> List[interp1d]:
         interp1d(lnaexp_growth, f3c, fill_value="extrapolate"),
         interp1d(lna, alphaB, fill_value="extrapolate"),
         interp1d(lna, alphaM, fill_value="extrapolate"),
-        interp1d(lna, Ma, fill_value="extrapolate")
+        interp1d(lna, Ma, fill_value="extrapolate"),
+        interp1d(lna, C2, fill_value="extrapolate"),
+        interp1d(lna, C4, fill_value="extrapolate")
     ]
 
 
