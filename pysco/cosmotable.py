@@ -81,6 +81,9 @@ def generate(param: pd.Series) -> List[interp1d]:
     alphaB = alphaB0*(1-om_ma) / (1-om_m)
     alphaM = alphaM0*(1-om_ma) / (1-om_m)
 
+    Ia = np.exp(cumulative_trapezoid(y=alphaM,x=lna),initial=0)
+    Ma = np.sqrt(Ia/(4*np.pi*G)) # this is M(a), check units and conventions
+
     # To add: M(a), possibly C2, C4 as well for fast compute
 
     logging.warning(
@@ -103,9 +106,10 @@ def generate(param: pd.Series) -> List[interp1d]:
             np.interp(lna, lnaexp_growth, d3c),
             np.interp(lna, lnaexp_growth, f3c),
             alphaB,
-            alphaM
+            alphaM,
+            Ma
         ],
-        header="aexp, H/H0, t_supercomoving, dplus1, f1, dplus2, f2, dplus3a, f3a, dplus3b, f3b, dplus3c, f3c, alphaB, alphaM",
+        header="aexp, H/H0, t_supercomoving, dplus1, f1, dplus2, f2, dplus3a, f3a, dplus3b, f3b, dplus3c, f3c, alphaB, alphaM, M(a)",
     )
     return [
         interp1d(t_supercomoving, lna, fill_value="extrapolate"),
@@ -123,6 +127,7 @@ def generate(param: pd.Series) -> List[interp1d]:
         interp1d(lnaexp_growth, f3c, fill_value="extrapolate"),
         interp1d(lna, alphaB, fill_value="extrapolate"),
         interp1d(lna, alphaM, fill_value="extrapolate"),
+        interp1d(lna, Ma, fill_value="extrapolate")
     ]
 
 
