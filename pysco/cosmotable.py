@@ -83,17 +83,13 @@ def generate(param: pd.Series) -> List[interp1d]:
     alphaB = alphaB0*(1-om_ma) / (1-om_m)
     alphaM = alphaM0*(1-om_ma) / (1-om_m)
     HdotbyH2 = -1.5*om_ma
-    H = (param["H0"]*E_array) / mpc_to_km
-    g = G.value * 1e-9 # G Units? 
-    rhom = 3.0 * om_m * param["H0"]**2 / (8.0 * np.pi * g) # Check units
     
-    Ia = np.exp(cumulative_trapezoid(y=alphaM,x=lna),initial=0)
-    Ma = np.sqrt(Ia/(4*np.pi*g)) # this is M(a), check units and conventions, where is G
+    Ia = np.exp(cumulative_trapezoid(y=alphaM,x=lna),initial=0) # M(a)^2 = I(a) / (4piG)
+    
+    #Ma = np.sqrt(Ia/(4*np.pi*g)) # this is M(a), check units and conventions, where is G
 
-    C2 = (-alphaM + alphaB*(1 + alphaM) + (1 + alphaB)*HdotbyH2 
-    + (3*a**3*alphaB0*om_m)/(a**3*(1 - om_m) + om_m)**2 
-    + rhom/(2*H**2*Ma**2))
-    
+    #C2 = (-alphaM + alphaB*(1 + alphaM) + (1 + alphaB)*HdotbyH2 + (3*a**3*alphaB0*om_m)/(a**3*(1 - om_m) + om_m)**2 + rhom/(2*H**2*Ma**2))
+    C2 = -alphaM + alphaB*(1 + alphaM) + (1 + alphaB)*HdotbyH2 + (3*a**3*alphaB0*om_m)/(a**3*(1 - om_m) + om_m)**2 + 0.75*om_m/(E_array**2*Ia)
     C4 = -4*alphaB + 2*alphaM
 
     
@@ -119,11 +115,11 @@ def generate(param: pd.Series) -> List[interp1d]:
             np.interp(lna, lnaexp_growth, f3c),
             alphaB,
             alphaM,
-            Ma,
+            Ia,
             C2,
             C4
         ],
-        header="aexp, H/H0, t_supercomoving, dplus1, f1, dplus2, f2, dplus3a, f3a, dplus3b, f3b, dplus3c, f3c, alphaB, alphaM, M(a), C2, C4",
+        header="aexp, H/H0, t_supercomoving, dplus1, f1, dplus2, f2, dplus3a, f3a, dplus3b, f3b, dplus3c, f3c, alphaB, alphaM, I(a), C2, C4",
     )
     return [
         interp1d(t_supercomoving, lna, fill_value="extrapolate"),
@@ -141,7 +137,7 @@ def generate(param: pd.Series) -> List[interp1d]:
         interp1d(lnaexp_growth, f3c, fill_value="extrapolate"),
         interp1d(lna, alphaB, fill_value="extrapolate"),
         interp1d(lna, alphaM, fill_value="extrapolate"),
-        interp1d(lna, Ma, fill_value="extrapolate"),
+        interp1d(lna, Ia, fill_value="extrapolate"),
         interp1d(lna, C2, fill_value="extrapolate"),
         interp1d(lna, C4, fill_value="extrapolate")
     ]
