@@ -81,6 +81,8 @@ def generate(param: pd.Series) -> List[interp1d]:
     alphaB = alphaB0*(1-om_ma) / (1-om_m)
     alphaM = alphaM0*(1-om_ma) / (1-om_m)
 
+    # To add: M(a), possibly C2, C4 as well for fast compute
+
     logging.warning(
         f"Write table in: {param['base']}/evolution_table_pysco_{param['extra']}.txt"
     )
