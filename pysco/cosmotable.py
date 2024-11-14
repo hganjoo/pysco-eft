@@ -6,7 +6,7 @@ the growth factor based on the w0waCDM cosmology model.
 
 import numpy as np
 import pandas as pd
-from astropy.constants import pc
+from astropy.constants import pc,G
 from astropy.cosmology import Flatw0waCDM
 from scipy.interpolate import interp1d
 import numpy.typing as npt
@@ -82,9 +82,9 @@ def generate(param: pd.Series) -> List[interp1d]:
     alphaM = alphaM0*(1-om_ma) / (1-om_m)
 
     Ia = np.exp(cumulative_trapezoid(y=alphaM,x=lna),initial=0)
-    Ma = np.sqrt(Ia/(4*np.pi*G)) # this is M(a), check units and conventions
+    Ma = np.sqrt(Ia/(4*np.pi*G)) # this is M(a), check units and conventions, where is G
 
-    # To add: M(a), possibly C2, C4 as well for fast compute
+    # To add: possibly C2, C4  for fast compute
 
     logging.warning(
         f"Write table in: {param['base']}/evolution_table_pysco_{param['extra']}.txt"
