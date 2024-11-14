@@ -83,9 +83,10 @@ def generate(param: pd.Series) -> List[interp1d]:
     HdotbyH2 = -1.5*om_ma
     H = param["H0"]*E_array
     rhom = param["aexp"]**3 * param["unit_d"] # Check: this is rho_m at a = 1?
+    g = G.value * 1e-9 # G value? Units? 
     
     Ia = np.exp(cumulative_trapezoid(y=alphaM,x=lna),initial=0)
-    Ma = np.sqrt(Ia/(4*np.pi*G)) # this is M(a), check units and conventions, where is G
+    Ma = np.sqrt(Ia/(4*np.pi*g)) # this is M(a), check units and conventions, where is G
 
     C2 = -alphaM + alphaB*(1 + alphaM) + (1 + alphaB)*HdotbyH2 + (3*a**3*alphaB0*om_m)/(a**3*(1 - om_m) + om_m)**2 + rhom/(2*H**2*Ma**2)
     C4 = -4*alphaB + 2*alphaM
