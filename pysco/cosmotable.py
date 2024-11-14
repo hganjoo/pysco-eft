@@ -76,12 +76,14 @@ def generate(param: pd.Series) -> List[interp1d]:
         :, mask
     ]
 
+    mpc_to_km = 1e3 * pc.value
+
     om_m = param["Om_m"]
     om_ma = om_m / (om_m + (1-om_m)*a**3)
     alphaB = alphaB0*(1-om_ma) / (1-om_m)
     alphaM = alphaM0*(1-om_ma) / (1-om_m)
     HdotbyH2 = -1.5*om_ma
-    H = param["H0"]*E_array
+    H = (param["H0"]*E_array) / mpc_to_km
     g = G.value * 1e-9 # G Units? 
     rhom = 3.0 * om_m * param["H0"]**2 / (8.0 * np.pi * g) # Check units
     
