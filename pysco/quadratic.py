@@ -100,6 +100,81 @@ def solution_quadratic_equation(
     return (-bv - dsc) / (2*av)
 
 
+@njit(
+    ["f4[:,:,::1](f4[:,:,::1], f4, f4, f4, f4, f4, f4, f4, f4)"],
+    fastmath=True,
+    cache=True,
+    parallel=True,
+)
+def initialise_potential(
+    b: npt.NDArray[np.float32],
+    h: np.float32,
+    alphaB0: np.float32,
+    alphaM0: np.float32,
+    M: np.float32,
+    H: np.float32,
+    a: np.float32,
+    rhom: np.float32,
+    om_ma: np.float32,
+) -> npt.NDArray[np.float32]:
+    """
+    HG: 14/11/2024
+
+    VERY ROUGH VERSION - have to decide how to initialise the scalar field \\
+    this might be too slow
+    
+    Solution for the Chi field \\
+    using the linear order DE solution \\
+    Laplacian[Chi] = mu_chi * delta 
+
+    Parameters
+    ----------
+    b : npt.NDArray[np.float32]
+        Density term [N_cells_1d, N_cells_1d, N_cells_1d]
+    h : np.float32
+        Grid size
+    alphaB0, alphaM0 : np.float32
+        EFT params
+    M: np.float32
+        Time-dependent Planck mass (taken from cosmotable)
+    H: np.float32
+        Hubble param at current time (taken from cosmotable)
+    a: np.float32
+        Scale factor
+    rhom: np.float32
+        matter density at current time
+    om_ma: np.float32
+        scaled omega_matter
+
+    Returns
+    -------
+    npt.NDArray[np.float32]
+        Chi field
+
+    
+    """
+
+    HdotbyH2 = -1.5*om_ma
+    om_m = 1./((a**(-3)) * (1/om_ma - 1) + 1)
+    alphaB = alphaB0*(1-om_ma) / (1-om_m)
+    alphaM = alphaM0*(1-om_ma) / (1-om_m)
+
+    C2 = -alphaM + alphaB*(1 + alphaM) + (1 + alphaB)*HdotbyH2 
+    + (3*a**3*alphaB0*om_m)/(a**3*(1 - om_m) + om_m)**2 + rhom/(2*H**2*M**2)
+    xi = alphaB - alphaM
+    nu = -C2 - alphaB*(xi - alphaM)
+    mu_chi = xi/nu
+    
+    pi = np.empty_like(b)
+    ncells_1d = b.shape[0]
+    for i in range(ncells_1d):
+        for j in range(ncells_1d):
+            for k in range(ncells_1d):
+                
+                pi[i, j, k] = (1./6)*((pi[-1 + i,j,k] + pi[i,-1 + j,k] + pi[i,j,-1 + k] + pi[i,j,1 + k] + pi[i,1 + j,k] + pi[1 + i,j,k]) 
+                                      - h*h*0.5*a*a*mu_chi*rhom*b[i,j,k]/(M*M))
+    return pi
+
 
 @njit(
     ["void(f8[:,:,::1], f8[:,:,::1], f8, f8, f8, f8, f8, f8, f8, f8, f8)"],
