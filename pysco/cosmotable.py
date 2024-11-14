@@ -28,6 +28,8 @@ def generate(param: pd.Series) -> List[interp1d]:
     List[interp1d]
         Interpolated functions [a(t), t(a), H(a), Dplus1(a), f1(a), Dplus2(a), f2(a), Dplus3a(a), f3a(a), Dplus3b(a), f3b(a), Dplus3c(a), f3c(a)]
 
+    - Modified by HG (14/11/24) to include alphaB and alphaM: Cusin et al EFT params
+
     Examples
     --------
     >>> import pandas as pd
@@ -56,6 +58,9 @@ def generate(param: pd.Series) -> List[interp1d]:
     param["Om_r"] = cosmo.Ogamma0 + cosmo.Onu0
     param["Om_lambda"] = cosmo.Ode0
 
+    alphaB0 = param["alphaB0"]
+    alphaM0 = param["alphaM0"]
+
     z_start = 200
     a_start = 1.0 / (1 + z_start)
     lna = np.linspace(np.log(a_start), 0, 100_000)
@@ -70,6 +75,11 @@ def generate(param: pd.Series) -> List[interp1d]:
     lnaexp_growth, d1, f1, d2, f2, d3a, f3a, d3b, f3b, d3c, f3c = growth_functions[
         :, mask
     ]
+
+    om_m = param["Om_m"]
+    om_ma = om_m / (om_m + (1-om_m)*a**3)
+    alphaB = alphaB0*(1-om_ma) / (1-om_m)
+    alphaM = alphaM0*(1-om_ma) / (1-om_m)
 
     logging.warning(
         f"Write table in: {param['base']}/evolution_table_pysco_{param['extra']}.txt"
@@ -90,8 +100,10 @@ def generate(param: pd.Series) -> List[interp1d]:
             np.interp(lna, lnaexp_growth, f3b),
             np.interp(lna, lnaexp_growth, d3c),
             np.interp(lna, lnaexp_growth, f3c),
+            alphaB,
+            alphaM
         ],
-        header="aexp, H/H0, t_supercomoving, dplus1, f1, dplus2, f2, dplus3a, f3a, dplus3b, f3b, dplus3c, f3c",
+        header="aexp, H/H0, t_supercomoving, dplus1, f1, dplus2, f2, dplus3a, f3a, dplus3b, f3b, dplus3c, f3c, alphaB, alphaM",
     )
     return [
         interp1d(t_supercomoving, lna, fill_value="extrapolate"),
@@ -107,6 +119,8 @@ def generate(param: pd.Series) -> List[interp1d]:
         interp1d(lnaexp_growth, f3b, fill_value="extrapolate"),
         interp1d(lnaexp_growth, d3c, fill_value="extrapolate"),
         interp1d(lnaexp_growth, f3c, fill_value="extrapolate"),
+        interp1d(lna, alphaB, fill_value="extrapolate"),
+        interp1d(lna, alphaM, fill_value="extrapolate"),
     ]
 
 
