@@ -40,8 +40,8 @@ def operator(
     
     Parameters
     ----------
-    x : npt.NDArray[np.float32]
-        Potential [N_cells_1d, N_cells_1d, N_cells_1d]
+    pi : npt.NDArray[np.float32]
+        Scalar field [N_cells_1d, N_cells_1d, N_cells_1d]
     b : npt.NDArray[np.float32]
         Density term [N_cells_1d, N_cells_1d, N_cells_1d]
     x,y,z : np.int16
@@ -62,7 +62,7 @@ def operator(
     Returns
     -------
     npt.NDArray[np.float32]
-        Quartic operator(x) [N_cells_1d, N_cells_1d, N_cells_1d]
+        Quadratic operator(x) [N_cells_1d, N_cells_1d, N_cells_1d]
 
     """
     ncells_1d = x.shape[0]
@@ -70,7 +70,35 @@ def operator(
     for i in prange(-1, ncells_1d - 1):
         for j in prange(-1, ncells_1d - 1):
             for k in prange(-1, ncells_1d - 1):
-                result[i,j,k] = solution_quadratic_equation(pi,b[x,y,z],x,y,z,h,C2,C4,alphaB,alphaM,H,a,M,rhom)
+
+                h2 = h**2
+                h4 = h2**2
+                aH2 = (a*H)**2
+                
+                pins = pi[-1 + i,j,k] + pi[i,-1 + j,k] + pi[i,j,-1 + k] + pi[i,j,1 + k] + pi[i,1 + j,k] + pi[1 + i,j,k]
+                
+                av = (-6.*C4)/(h4 * aH2)
+
+                lin = (alphaB*(6.*alphaB - 12.*alphaM) + 6.*C2)/h2
+                nlin = -8*pins/(h4)
+                
+                bv = lin - 0.25*C4*nlin/(aH2)
+
+                lin = (
+                    (a**2*(-0.5*alphaB + 0.5*alphaM )*b*rhom)/M**2 
+                    + ((alphaB*(-alphaB + 2.*alphaM) - C2)*(pins))/h2
+                )
+
+                # Coeff of pi^0 in Q2[pi,pi]
+                q2offd = -0.125*((pi[i,-1 + j,-1 + k] - pi[i,-1 + j,1 + k] - pi[i,1 + j,-1 + k] + pi[i,1 + j,1 + k])**2 
+                - 16.*((pi[i,j,-1 + k] + pi[i,j,1 + k])*(pi[i,-1 + j,k] + pi[i,1 + j,k]) + pi[-1 + i,j,k]*(pi[i,-1 + j,k] + pi[i,j,-1 + k] + pi[i,j,1 + k] + pi[i,1 + j,k]) + (pi[i,-1 + j,k] + pi[i,j,-1 + k] + pi[i,j,1 + k] + pi[i,1 + j,k])*pi[1 + i,j,k]) 
+                + (pi[-1 + i,j,-1 + k] - pi[-1 + i,j,1 + k] - pi[1 + i,j,-1 + k] + pi[1 + i,j,1 + k])**2 
+                + (pi[-1 + i,-1 + j,k] - pi[-1 + i,1 + j,k] - pi[1 + i,-1 + j,k] + pi[1 + i,1 + j,k])**2)/(h4)
+
+                cv = lin - 0.25*C4*q2offd/(aH2)
+
+                result[i,j,k] = av*pi[i,j,k]**2 + bv*pi[i,j,k] + cv
+    
     return result
 
 
@@ -158,6 +186,60 @@ def solution_quadratic_equation(
 
     dsc = np.sqrt(bv**2 - 4*av*cv)
     return (-bv - dsc) / (2*av)
+
+
+@njit(
+    ["void(f4[:,:,::1], f4[:,:,::1], f4, f4, f4, f4, f4, f4, f4, f4, f4)"],
+    fastmath=True,
+    cache=True,
+    parallel=True,
+)
+def gauss_seidel(
+    pi: npt.NDArray[np.float32],
+    b: npt.NDArray[np.float32],
+    h: np.float32,
+    C2: np.float32,
+    C4: np.float32,
+    alphaB: np.float32,
+    alphaM: np.float32,
+    H: np.float32,
+    a: np.float32,
+    M: np.float32,
+    rhom: np.float32) -> npt.NDArray[np.float32]:
+    """Gauss-Seidel quadratic equation solver \\
+    Solve the roots of u in the equation: \\
+    a u^2 + bu + c = 0 \\
+    for the EFT in Cusin et al (2017)\\
+    
+    Parameters
+    ----------
+    pi : npt.NDArray[np.float32]
+        Scalar field [N_cells_1d, N_cells_1d, N_cells_1d]
+    b : npt.NDArray[np.float32]
+        Density term [N_cells_1d, N_cells_1d, N_cells_1d]
+    h : np.float32
+        Grid size
+    C2, C4, alphaB, alphaM : np.float32
+        EFT params
+    H : np.float32
+        Hubble param
+    a : np.float32
+        scale factor
+    M : np.float32
+        time-dependent Planck mass
+    rhom : np.float32
+        matter density
+        
+    """
+
+    ncells_1d = pi.shape[0]
+
+    for ix in range(-1,ncells_1d):
+            for iy in range(-1,ncells_1d):
+                for iz in range(-1,ncells_1d):
+                    pi[ix,iy,iz] = solution_quadratic_equation(pi,b[ix,iy,iz],ix,iy,iz,h,C2,C4,alphaB,alphaM,H,a,M,rhom)
+                    
+
 
 
 @njit(
