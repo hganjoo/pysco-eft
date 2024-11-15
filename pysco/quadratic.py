@@ -12,27 +12,89 @@ import numpy.typing as npt
 from numba import config, njit, prange
 import math
 
+@njit(
+    ["f4[:,:,::1](f4[:,:,::1], f4[:,:,::1], i4, i4, i4, f4, f4, f4, f4, f4, f4, f4, f4, f4)"],
+    fastmath=True,
+    cache=True,
+    parallel=True,
+)
+def operator(
+    pi: npt.NDArray[np.float32],
+    b: npt.NDArray[np.float32],
+    x: np.int32,
+    y: np.int32,
+    z: np.int32,
+    h: np.float32,
+    C2: np.float32,
+    C4: np.float32,
+    alphaB: np.float32,
+    alphaM: np.float32,
+    H: np.float32,
+    a: np.float32,
+    M: np.float32,
+    rhom: np.float32) -> npt.NDArray[np.float32]:
+    """Quadratic operator
+
+    a pi^2 + b pi + c = 0 \\
+    EFT from Cusin et al. (2017)\\
+    
+    Parameters
+    ----------
+    x : npt.NDArray[np.float32]
+        Potential [N_cells_1d, N_cells_1d, N_cells_1d]
+    b : npt.NDArray[np.float32]
+        Density term [N_cells_1d, N_cells_1d, N_cells_1d]
+    x,y,z : np.int16
+        3D indices [i,j,k]
+    h : np.float32
+        Grid size
+    C2, C4, alphaB, alphaM : np.float32
+        EFT params
+    H : np.float32
+        Hubble param
+    a : np.float32
+        scale factor
+    M : np.float32
+        time-dependent Planck mass
+    rhom : np.float32
+        matter density
+        
+    Returns
+    -------
+    npt.NDArray[np.float32]
+        Quartic operator(x) [N_cells_1d, N_cells_1d, N_cells_1d]
+
+    """
+    ncells_1d = x.shape[0]
+    result = np.empty_like(x)
+    for i in prange(-1, ncells_1d - 1):
+        for j in prange(-1, ncells_1d - 1):
+            for k in prange(-1, ncells_1d - 1):
+                result[i,j,k] = solution_quadratic_equation(pi,b[x,y,z],x,y,z,h,C2,C4,alphaB,alphaM,H,a,M,rhom)
+    return result
+
+
 
 @njit(
-        ["f8(f8[:,:,::1],f8,i8,i8,i8,f8,f8,f8,f8,f8,f8,f8,f8,f8)"],
+        ["f4(f4[:,:,::1],f4,i4,i4,i4,f4,f4,f4,f4,f4,f4,f4,f4,f4)"],
         fastmath=True
 )
 def solution_quadratic_equation(
-    pi: npt.NDArray[np.float64],
-    b: np.float64,
-    x: np.int64,
-    y: np.int64,
-    z: np.int64,
-    h: np.float64,
-    C2: np.float64,
-    C4: np.float64,
-    alphaB: np.float64,
-    alphaM: np.float64,
-    H: np.float64,
-    a: np.float64,
-    M: np.float64,
-    rhom: np.float64
-) -> np.float64:
+    pi: npt.NDArray[np.float32],
+    b: np.float32,
+    x: np.int32,
+    y: np.int32,
+    z: np.int32,
+    h: np.float32,
+    C2: np.float32,
+    C4: np.float32,
+    alphaB: np.float32,
+    alphaM: np.float32,
+    H: np.float32,
+    a: np.float32,
+    M: np.float32,
+    rhom: np.float32
+) -> np.float32:
     
     """Solution of the quadratic equation governing the pi (chi) field \\
     for the EFT parameters. 
@@ -42,29 +104,29 @@ def solution_quadratic_equation(
 
     Parameters
     ----------
-    pi : npt.NDArray[np.float64]
+    pi : npt.NDArray[np.float32]
          Pi Field [N_cells_1d, N_cells_1d, N_cells_1d]
-    b : npt.NDArray[np.float64]
+    b : npt.NDArray[np.float32]
         Density term at [x,y,z]
     x,y,z : np.int16
         3D indices [i,j,k]
-    h : np.float64
+    h : np.float32
         Grid size
-    C2, C4, alphaB, alphaM : np.float64
+    C2, C4, alphaB, alphaM : np.float32
         EFT params
-    H : np.float64
+    H : np.float32
         Hubble param
-    a : np.float64
+    a : np.float32
         scale factor
-    M : np.float64
+    M : np.float32
         time-dependent Planck mass
-    rhom : np.float64
+    rhom : np.float32
         matter density
 
 
     Returns
     -------
-    np.float64
+    np.float32
         Solution of the quadratic equation for Pi at location [x,y,z]
     """
 
@@ -80,8 +142,6 @@ def solution_quadratic_equation(
     nlin = -8*pins/(h4)
     
     bv = lin - 0.25*C4*nlin/(aH2)
-
-    pins = pi[-1 + x,y,z] + pi[x,-1 + y,z] + pi[x,y,-1 + z] + pi[x,y,1 + z] + pi[x,1 + y,z] + pi[1 + x,y,z]
 
     lin = (
         (a**2*(-0.5*alphaB + 0.5*alphaM )*b*rhom)/M**2 
@@ -109,12 +169,12 @@ def solution_quadratic_equation(
 def initialise_potential(
     b: npt.NDArray[np.float32],
     h: np.float32,
-    C2: np.float64,
-    alphaB: np.float64,
-    alphaM: np.float64,
-    a: np.float64,
-    M: np.float64,
-    rhom: np.float64
+    C2: np.float32,
+    alphaB: np.float32,
+    alphaM: np.float32,
+    a: np.float32,
+    M: np.float32,
+    rhom: np.float32
     
 ) -> npt.NDArray[np.float32]:
     """
@@ -163,86 +223,5 @@ def initialise_potential(
                 pi[i, j, k] = (1./6)*((pi[-1 + i,j,k] + pi[i,-1 + j,k] + pi[i,j,-1 + k] + pi[i,j,1 + k] + pi[i,1 + j,k] + pi[1 + i,j,k]) 
                                       - h*h*0.5*a*a*mu_chi*rhom*b[i,j,k]/(M*M))
     return pi
-
-
-@njit(
-    ["void(f8[:,:,::1], f8[:,:,::1], f8, f8, f8, f8, f8, f8, f8, f8, f8)"],
-    fastmath=True,
-    cache=True,
-    parallel=True,
-)
-def gauss_seidel(
-    x: npt.NDArray[np.float64],
-    b: npt.NDArray[np.float64],
-    h: np.float64,
-    C2: np.float64,
-    C4: np.float64,
-    alphaB: np.float64,
-    alphaM: np.float64,
-    H: np.float64,
-    a: np.float64,
-    M: np.float64,
-    rhom: np.float64
-) -> None:
-    """Gauss-Seidel quadratic equation solver for Pi (Chi) \\
-    Solve the roots of u in the equation: \\
-    au^2 + bu + c = 0 \\
-    in Simple EFT, Cusin et al (2017)\\
-
-    Parameters
-    ----------
-    x : npt.NDArray[np.float64]
-        Chi Field [N_cells_1d, N_cells_1d, N_cells_1d]
-    b : npt.NDArray[np.float64]
-        Density term [N_cells_1d, N_cells_1d, N_cells_1d]
-    h : np.float64
-        Grid size
-    C2, C4, alphaB, alphaM : np.float64
-        EFT params
-    H : np.float64
-        Hubble param
-    a : np.float64
-        scale factor
-    M : np.float64
-        time-dependent Planck mass
-    rhom : np.float64
-        matter density
-
-    """
-    half_ncells_1d = x.shape[0] >> 1
-    # Computation Red
-    for i in prange(x.shape[0] >> 1):
-        ii = 2 * i
-        iim1 = ii - 1
-        for j in prange(half_ncells_1d):
-            jj = 2 * j
-            jjm1 = jj - 1
-            for k in prange(half_ncells_1d):
-                kk = 2 * k
-                kkm1 = kk - 1
-
-                x[iim1, jjm1, kkm1] = solution_quadratic_equation(x,b[iim1,jjm1,kkm1],iim1,jjm1,kkm1,h,C2,C4,alphaB,alphaM,H,a,M,rhom)
-                x[iim1, jj, kk] = solution_quadratic_equation(x,b[iim1,jj,kk],iim1,jj,kk,h,C2,C4,alphaB,alphaM,H,a,M,rhom)
-                x[ii, jjm1, kk] = solution_quadratic_equation(x,b[ii,jjm1,kk],ii,jjm1,kk,h,C2,C4,alphaB,alphaM,H,a,M,rhom)
-                x[ii, jj, kkm1] = solution_quadratic_equation(x,b[ii,jj,kkm1],ii,jj,kkm1,h,C2,C4,alphaB,alphaM,H,a,M,rhom)
-
-    # Computation Black
-    for i in prange(half_ncells_1d):
-        ii = 2 * i
-        iim1 = ii - 1
-        for j in prange(half_ncells_1d):
-            jj = 2 * j
-            jjm1 = jj - 1
-            for k in prange(half_ncells_1d):
-                kk = 2 * k
-                kkm1 = kk - 1
-
-                x[iim1, jjm1, kk] = solution_quadratic_equation(x,b[iim1,jjm1,kk],iim1,jjm1,kk,h,C2,C4,alphaB,alphaM,H,a,M,rhom)
-                x[iim1, jj, kkm1] = solution_quadratic_equation(x,b[iim1,jj,kkm1],iim1,jj,kkm1,h,C2,C4,alphaB,alphaM,H,a,M,rhom)
-                x[ii, jjm1, kkm1] = solution_quadratic_equation(x,b[ii,jjm1,kkm1],ii,jjm1,kkm1,h,C2,C4,alphaB,alphaM,H,a,M,rhom)
-                x[ii, jj, kk] = solution_quadratic_equation(x,b[ii,jj,kk],ii,jj,kk,h,C2,C4,alphaB,alphaM,H,a,M,rhom)
-
-
-
 
 

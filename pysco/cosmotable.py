@@ -86,8 +86,6 @@ def generate(param: pd.Series) -> List[interp1d]:
     
     Ia = np.exp(cumulative_trapezoid(y=alphaM,x=lna),initial=0) # M(a)^2 = I(a) / (4piG)
     
-    #Ma = np.sqrt(Ia/(4*np.pi*g)) # this is M(a), check units and conventions, where is G
-
     #C2 = (-alphaM + alphaB*(1 + alphaM) + (1 + alphaB)*HdotbyH2 + (3*a**3*alphaB0*om_m)/(a**3*(1 - om_m) + om_m)**2 + rhom/(2*H**2*Ma**2))
     C2 = -alphaM + alphaB*(1 + alphaM) + (1 + alphaB)*HdotbyH2 + (3*a**3*alphaB0*om_m)/(a**3*(1 - om_m) + om_m)**2 + 0.75*om_m/(E_array**2*Ia)
     C4 = -4*alphaB + 2*alphaM
