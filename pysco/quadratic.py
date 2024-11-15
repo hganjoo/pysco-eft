@@ -13,7 +13,7 @@ from numba import config, njit, prange
 import math
 
 @njit(
-    ["f4[:,:,::1](f4[:,:,::1], f4[:,:,::1], i4, i4, i4, f4, f4, f4, f4, f4, f4, f4, f4, f4)"],
+    ["f4[:,:,::1](f4[:,:,::1], f4[:,:,::1], f4, f4, f4, f4, f4, f4, f4, f4, f4)"],
     fastmath=True,
     cache=True,
     parallel=True,
@@ -21,9 +21,6 @@ import math
 def operator(
     pi: npt.NDArray[np.float32],
     b: npt.NDArray[np.float32],
-    x: np.int32,
-    y: np.int32,
-    z: np.int32,
     h: np.float32,
     C2: np.float32,
     C4: np.float32,
@@ -44,8 +41,6 @@ def operator(
         Scalar field [N_cells_1d, N_cells_1d, N_cells_1d]
     b : npt.NDArray[np.float32]
         Density term [N_cells_1d, N_cells_1d, N_cells_1d]
-    x,y,z : np.int16
-        3D indices [i,j,k]
     h : np.float32
         Grid size
     C2, C4, alphaB, alphaM : np.float32
@@ -65,8 +60,8 @@ def operator(
         Quadratic operator(x) [N_cells_1d, N_cells_1d, N_cells_1d]
 
     """
-    ncells_1d = x.shape[0]
-    result = np.empty_like(x)
+    ncells_1d = pi.shape[0]
+    result = np.empty_like(pi)
     for i in prange(-1, ncells_1d - 1):
         for j in prange(-1, ncells_1d - 1):
             for k in prange(-1, ncells_1d - 1):
@@ -234,9 +229,9 @@ def gauss_seidel(
 
     ncells_1d = pi.shape[0]
 
-    for ix in range(-1,ncells_1d):
-            for iy in range(-1,ncells_1d):
-                for iz in range(-1,ncells_1d):
+    for ix in range(-1,ncells_1d - 1):
+            for iy in range(-1,ncells_1d - 1):
+                for iz in range(-1,ncells_1d - 1):
                     pi[ix,iy,iz] = solution_quadratic_equation(pi,b[ix,iy,iz],ix,iy,iz,h,C2,C4,alphaB,alphaM,H,a,M,rhom)
                     
 
