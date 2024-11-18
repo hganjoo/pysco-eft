@@ -80,7 +80,7 @@ def operator(
                 bv = lin - 0.25*C4*nlin/(aH2)
 
                 lin = (
-                    (a**2*(-0.5*alphaB + 0.5*alphaM )*b*rhom)/M**2 
+                    (a**2*(-0.5*alphaB + 0.5*alphaM )*b[i,j,k]*rhom)/M**2 
                     + ((alphaB*(-alphaB + 2.*alphaM) - C2)*(pins))/h2
                 )
 
@@ -186,8 +186,7 @@ def solution_quadratic_equation(
 @njit(
     ["void(f4[:,:,::1], f4[:,:,::1], f4, f4, f4, f4, f4, f4, f4, f4, f4)"],
     fastmath=True,
-    cache=True,
-    parallel=True,
+    cache=True
 )
 def gauss_seidel(
     pi: npt.NDArray[np.float32],

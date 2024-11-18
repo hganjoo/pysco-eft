@@ -58,8 +58,6 @@ def generate(param: pd.Series) -> List[interp1d]:
     param["Om_r"] = cosmo.Ogamma0 + cosmo.Onu0
     param["Om_lambda"] = cosmo.Ode0
 
-    alphaB0 = param["alphaB0"]
-    alphaM0 = param["alphaM0"]
 
     z_start = 200
     a_start = 1.0 / (1 + z_start)
@@ -76,6 +74,13 @@ def generate(param: pd.Series) -> List[interp1d]:
         :, mask
     ]
 
+    if "eft" == param["theory"].casefold:
+        alphaB0 = param["alphaB0"]
+        alphaM0 = param["alphaM0"]
+    else:
+        alphaB0 = 0.0
+        alphaM0 = 0.0
+
     mpc_to_km = 1e3 * pc.value
 
     om_m = param["Om_m"]
@@ -84,7 +89,7 @@ def generate(param: pd.Series) -> List[interp1d]:
     alphaM = alphaM0*(1-om_ma) / (1-om_m)
     HdotbyH2 = -1.5*om_ma
     
-    Ia = np.exp(cumulative_trapezoid(y=alphaM,x=lna),initial=0) # M(a)^2 = I(a) / (4piG)
+    Ia = np.exp(cumulative_trapezoid(y=alphaM,x=lna),initial=0) # M(a)^2 = I(a) / (8 pi G)
     
     #C2 = (-alphaM + alphaB*(1 + alphaM) + (1 + alphaB)*HdotbyH2 + (3*a**3*alphaB0*om_m)/(a**3*(1 - om_m) + om_m)**2 + rhom/(2*H**2*Ma**2))
     C2 = -alphaM + alphaB*(1 + alphaM) + (1 + alphaB)*HdotbyH2 + (3*a**3*alphaB0*om_m)/(a**3*(1 - om_m) + om_m)**2 + 0.75*om_m/(E_array**2*Ia)
