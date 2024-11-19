@@ -10,7 +10,7 @@ Himanish Ganjoo - Nov 2024
 import numpy as np
 import numpy.typing as npt
 from numba import config, njit, prange
-import math
+import mesh
 
 @njit(
     ["f4[:,:,::1](f4[:,:,::1], f4[:,:,::1], f4, f4, f4, f4, f4, f4, f4, f4, f4)"],
@@ -22,7 +22,7 @@ def operator(
     pi: npt.NDArray[np.float32],
     b: npt.NDArray[np.float32],
     h: np.float32,
-    C2: np.float32,
+    C2: np.float32, 
     C4: np.float32,
     alphaB: np.float32,
     alphaM: np.float32,
@@ -200,7 +200,7 @@ def solution_quadratic_equation(
     fastmath=True,
     cache=True
 )
-def gauss_seidel(
+def jacobi(
     pi: npt.NDArray[np.float32],
     b: npt.NDArray[np.float32],
     h: np.float32,
@@ -260,7 +260,7 @@ def smoothing(
     rhom: np.float32,
     n_smoothing: int) -> None:
     
-    """Smooth Chi field with several Gauss-Seidel iterations
+    """Smooth Chi field with several Jacobi iterations
 
     pi : npt.NDArray[np.float32]
         Scalar field [N_cells_1d, N_cells_1d, N_cells_1d]
@@ -284,7 +284,7 @@ def smoothing(
     """
     
     for _ in range(n_smoothing):
-        gauss_seidel(pi, b, h, C2, C4, alphaB, alphaM, H, a, M, rhom, n_smoothing)
+        jacobi(pi, b, h, C2, C4, alphaB, alphaM, H, a, M, rhom, n_smoothing)
 
 
 @njit(
@@ -418,12 +418,12 @@ def residual_error(
         
     Returns
     -------
-    npt.NDArray[np.float32]
-        Residual(x) [N_cells_1d, N_cells_1d, N_cells_1d]
+    np.float32
+        Residual error
 
     """
     ncells_1d = pi.shape[0]
-    result = np.float32(0)
+    result = 0.0
     for i in prange(-1, ncells_1d - 1):
         for j in prange(-1, ncells_1d - 1):
             for k in prange(-1, ncells_1d - 1):
@@ -459,6 +459,66 @@ def residual_error(
     return np.sqrt(result)
 
 
+@njit(
+    ["f4(f4[:,:,::1], f4[:,:,::1], f4, f4, f4, f4, f4, f4, f4, f4, f4)"],
+    fastmath=True,
+    cache=True,
+    parallel=True,
+)
+def truncation_error(
+    pi: npt.NDArray[np.float32],
+    b: npt.NDArray[np.float32],
+    h: np.float32,
+    C2: np.float32,
+    C4: np.float32,
+    alphaB: np.float32,
+    alphaM: np.float32,
+    H: np.float32,
+    a: np.float32,
+    M: np.float32,
+    rhom: np.float32) -> np.float32:
+
+    """
+    Truncation error estimator \\
+    As in Numerical Recipes, we estimate the truncation error as \\
+    t = Operator(Restriction(Phi)) - Operator(Laplacian(Phi)) \\
+    error = sqrt[sum(residual**2)] \\
+    
+    Parameters
+    ----------
+    pi : npt.NDArray[np.float32]
+        Scalar field [N_cells_1d, N_cells_1d, N_cells_1d]
+    b : npt.NDArray[np.float32]
+        Density term [N_cells_1d, N_cells_1d, N_cells_1d]
+    h : np.float32
+        Grid size
+    C2, C4, alphaB, alphaM : np.float32
+        EFT params
+    H : np.float32
+        Hubble param
+    a : np.float32
+        scale factor
+    M : np.float32
+        time-dependent Planck mass
+    rhom : np.float32
+        matter density
+        
+    Returns
+    -------
+    np.float32
+        Truncation error
+
+    """
+
+    ncells_1d = pi.shape[0]
+    RLx = mesh.restriction(operator(pi,b,h,C2,C4,alphaB,alphaM,H,a,M,rhom))
+    LRx = operator(mesh.restriction(pi), mesh.restriction(b), 2 * h ,C2,C4,alphaB,alphaM,H,a,M,rhom)
+    result = 0.0
+    for i in prange(-1, ncells_1d - 1):
+        for j in prange(-1, ncells_1d - 1):
+            for k in prange(-1, ncells_1d - 1):
+                result += (RLx[i, j, k] - LRx[i, j, k]) ** 2
+    return np.sqrt(result)
 
 
 
