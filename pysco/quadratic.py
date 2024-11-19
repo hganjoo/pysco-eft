@@ -70,27 +70,34 @@ def operator(
                 h4 = h2**2
                 aH2 = (a*H)**2
                 
+                onebyfour = np.float32(0.25)
+                onebyeight = np.float32(0.125)
+                six = np.float32(6)
+                eight = np.float32(8)
+
+                
                 pins = pi[-1 + i,j,k] + pi[i,-1 + j,k] + pi[i,j,-1 + k] + pi[i,j,1 + k] + pi[i,1 + j,k] + pi[1 + i,j,k]
                 
-                av = (-6.*C4)/(h4 * aH2)
+                av = (-six*C4)/(h4 * aH2)
 
-                lin = (alphaB*(6.*alphaB - 12.*alphaM) + 6.*C2)/h2
-                nlin = -8*pins/(h4)
+                lin = (alphaB*(six*alphaB - six*alphaM) + six*C2)/h2
+                nlin = -eight*pins/(h4)
                 
-                bv = lin - 0.25*C4*nlin/(aH2)
+                bv = lin - onebyfour*C4*nlin/(aH2)
 
                 lin = (
-                    (a**2*(-0.5*alphaB + 0.5*alphaM )*b[i,j,k]*rhom)/M**2 
+                    2*onebyfour(a**2*(-alphaB + alphaM )*b*rhom)/M**2 
                     + ((alphaB*(-alphaB + 2.*alphaM) - C2)*(pins))/h2
                 )
 
                 # Coeff of pi^0 in Q2[pi,pi]
-                q2offd = -0.125*((pi[i,-1 + j,-1 + k] - pi[i,-1 + j,1 + k] - pi[i,1 + j,-1 + k] + pi[i,1 + j,1 + k])**2 
+                q2offd = -onebyeight*((pi[i,-1 + j,-1 + k] - pi[i,-1 + j,1 + k] - pi[i,1 + j,-1 + k] + pi[i,1 + j,1 + k])**2 
                 - 16.*((pi[i,j,-1 + k] + pi[i,j,1 + k])*(pi[i,-1 + j,k] + pi[i,1 + j,k]) + pi[-1 + i,j,k]*(pi[i,-1 + j,k] + pi[i,j,-1 + k] + pi[i,j,1 + k] + pi[i,1 + j,k]) + (pi[i,-1 + j,k] + pi[i,j,-1 + k] + pi[i,j,1 + k] + pi[i,1 + j,k])*pi[1 + i,j,k]) 
                 + (pi[-1 + i,j,-1 + k] - pi[-1 + i,j,1 + k] - pi[1 + i,j,-1 + k] + pi[1 + i,j,1 + k])**2 
                 + (pi[-1 + i,-1 + j,k] - pi[-1 + i,1 + j,k] - pi[1 + i,-1 + j,k] + pi[1 + i,1 + j,k])**2)/(h4)
 
-                cv = lin - 0.25*C4*q2offd/(aH2)
+                cv = lin - onebyfour*C4*q2offd/(aH2)
+
 
                 result[i,j,k] = av*pi[i,j,k]**2 + bv*pi[i,j,k] + cv
     
@@ -156,28 +163,33 @@ def solution_quadratic_equation(
     h2 = h**2
     h4 = h2**2
     aH2 = (a*H)**2
+    onebyfour = np.float32(0.25)
+    onebyeight = np.float32(0.125)
+    six = np.float32(6)
+    eight = np.float32(8)
+
     
     pins = pi[-1 + x,y,z] + pi[x,-1 + y,z] + pi[x,y,-1 + z] + pi[x,y,1 + z] + pi[x,1 + y,z] + pi[1 + x,y,z]
     
-    av = (-6.*C4)/(h4 * aH2)
+    av = (-six*C4)/(h4 * aH2)
 
-    lin = (alphaB*(6.*alphaB - 12.*alphaM) + 6.*C2)/h2
-    nlin = -8*pins/(h4)
+    lin = (alphaB*(six*alphaB - six*alphaM) + six*C2)/h2
+    nlin = -eight*pins/(h4)
     
-    bv = lin - 0.25*C4*nlin/(aH2)
+    bv = lin - onebyfour*C4*nlin/(aH2)
 
     lin = (
-        (a**2*(-0.5*alphaB + 0.5*alphaM )*b*rhom)/M**2 
+        2*onebyfour(a**2*(-alphaB + alphaM )*b*rhom)/M**2 
         + ((alphaB*(-alphaB + 2.*alphaM) - C2)*(pins))/h2
     )
 
     # Coeff of pi^0 in Q2[pi,pi]
-    q2offd = -0.125*((pi[x,-1 + y,-1 + z] - pi[x,-1 + y,1 + z] - pi[x,1 + y,-1 + z] + pi[x,1 + y,1 + z])**2 
+    q2offd = -onebyeight*((pi[x,-1 + y,-1 + z] - pi[x,-1 + y,1 + z] - pi[x,1 + y,-1 + z] + pi[x,1 + y,1 + z])**2 
     - 16.*((pi[x,y,-1 + z] + pi[x,y,1 + z])*(pi[x,-1 + y,z] + pi[x,1 + y,z]) + pi[-1 + x,y,z]*(pi[x,-1 + y,z] + pi[x,y,-1 + z] + pi[x,y,1 + z] + pi[x,1 + y,z]) + (pi[x,-1 + y,z] + pi[x,y,-1 + z] + pi[x,y,1 + z] + pi[x,1 + y,z])*pi[1 + x,y,z]) 
     + (pi[-1 + x,y,-1 + z] - pi[-1 + x,y,1 + z] - pi[1 + x,y,-1 + z] + pi[1 + x,y,1 + z])**2 
     + (pi[-1 + x,-1 + y,z] - pi[-1 + x,1 + y,z] - pi[1 + x,-1 + y,z] + pi[1 + x,1 + y,z])**2)/(h4)
 
-    cv = lin - 0.25*C4*q2offd/(aH2)
+    cv = lin - onebyfour*C4*q2offd/(aH2)
 
     dsc = np.sqrt(bv**2 - 4*av*cv)
     return (-bv - dsc) / (2*av)
@@ -199,7 +211,7 @@ def gauss_seidel(
     H: np.float32,
     a: np.float32,
     M: np.float32,
-    rhom: np.float32) -> npt.NDArray[np.float32]:
+    rhom: np.float32) -> None:
     """Gauss-Seidel quadratic equation solver \\
     Solve the roots of u in the equation: \\
     a u^2 + bu + c = 0 \\
@@ -233,6 +245,221 @@ def gauss_seidel(
                 for iz in range(-1,ncells_1d - 1):
                     pi[ix,iy,iz] = solution_quadratic_equation(pi,b[ix,iy,iz],ix,iy,iz,h,C2,C4,alphaB,alphaM,H,a,M,rhom)
                     
+
+def smoothing(
+    pi: npt.NDArray[np.float32],
+    b: npt.NDArray[np.float32],
+    h: np.float32,
+    C2: np.float32,
+    C4: np.float32,
+    alphaB: np.float32,
+    alphaM: np.float32,
+    H: np.float32,
+    a: np.float32,
+    M: np.float32,
+    rhom: np.float32,
+    n_smoothing: int,
+) -> None:
+    
+    """Smooth Chi field with several Gauss-Seidel iterations
+
+    pi : npt.NDArray[np.float32]
+        Scalar field [N_cells_1d, N_cells_1d, N_cells_1d]
+    b : npt.NDArray[np.float32]
+        Density term [N_cells_1d, N_cells_1d, N_cells_1d]
+    h : np.float32
+        Grid size
+    C2, C4, alphaB, alphaM : np.float32
+        EFT params
+    H : np.float32
+        Hubble param
+    a : np.float32
+        scale factor
+    M : np.float32
+        time-dependent Planck mass
+    rhom : np.float32
+        matter density
+    n_smoothing : int
+        number of smoothing iterations
+
+    """
+    
+    for _ in range(n_smoothing):
+        gauss_seidel(pi, b, h, C2, C4, alphaB, alphaM, H, a, M, rhom, n_smoothing)
+
+
+@njit(
+    ["f4[:,:,::1](f4[:,:,::1], f4[:,:,::1], f4, f4, f4, f4, f4, f4, f4, f4, f4)"],
+    fastmath=True,
+    cache=True,
+    parallel=True,
+)
+def residual(
+    pi: npt.NDArray[np.float32],
+    b: npt.NDArray[np.float32],
+    h: np.float32,
+    C2: np.float32,
+    C4: np.float32,
+    alphaB: np.float32,
+    alphaM: np.float32,
+    H: np.float32,
+    a: np.float32,
+    M: np.float32,
+    rhom: np.float32) -> npt.NDArray[np.float32]:
+
+    """Residual of Quadratic operator
+
+    R = -(a pi^2 + b pi + c) \\
+    EFT from Cusin et al. (2017)\\
+    
+    Parameters
+    ----------
+    pi : npt.NDArray[np.float32]
+        Scalar field [N_cells_1d, N_cells_1d, N_cells_1d]
+    b : npt.NDArray[np.float32]
+        Density term [N_cells_1d, N_cells_1d, N_cells_1d]
+    h : np.float32
+        Grid size
+    C2, C4, alphaB, alphaM : np.float32
+        EFT params
+    H : np.float32
+        Hubble param
+    a : np.float32
+        scale factor
+    M : np.float32
+        time-dependent Planck mass
+    rhom : np.float32
+        matter density
+        
+    Returns
+    -------
+    npt.NDArray[np.float32]
+        Residual(x) [N_cells_1d, N_cells_1d, N_cells_1d]
+
+    """
+    ncells_1d = pi.shape[0]
+    result = np.empty_like(pi)
+    for i in prange(-1, ncells_1d - 1):
+        for j in prange(-1, ncells_1d - 1):
+            for k in prange(-1, ncells_1d - 1):
+
+                h2 = h**2
+                h4 = h2**2
+                aH2 = (a*H)**2
+                
+                pins = pi[-1 + i,j,k] + pi[i,-1 + j,k] + pi[i,j,-1 + k] + pi[i,j,1 + k] + pi[i,1 + j,k] + pi[1 + i,j,k]
+                
+                av = (-6.*C4)/(h4 * aH2)
+
+                lin = (alphaB*(6.*alphaB - 12.*alphaM) + 6.*C2)/h2
+                nlin = -8*pins/(h4)
+                
+                bv = lin - 0.25*C4*nlin/(aH2)
+
+                lin = (
+                    (a**2*(-0.5*alphaB + 0.5*alphaM )*b[i,j,k]*rhom)/M**2 
+                    + ((alphaB*(-alphaB + 2.*alphaM) - C2)*(pins))/h2
+                )
+
+                # Coeff of pi^0 in Q2[pi,pi]
+                q2offd = -0.125*((pi[i,-1 + j,-1 + k] - pi[i,-1 + j,1 + k] - pi[i,1 + j,-1 + k] + pi[i,1 + j,1 + k])**2 
+                - 16.*((pi[i,j,-1 + k] + pi[i,j,1 + k])*(pi[i,-1 + j,k] + pi[i,1 + j,k]) + pi[-1 + i,j,k]*(pi[i,-1 + j,k] + pi[i,j,-1 + k] + pi[i,j,1 + k] + pi[i,1 + j,k]) + (pi[i,-1 + j,k] + pi[i,j,-1 + k] + pi[i,j,1 + k] + pi[i,1 + j,k])*pi[1 + i,j,k]) 
+                + (pi[-1 + i,j,-1 + k] - pi[-1 + i,j,1 + k] - pi[1 + i,j,-1 + k] + pi[1 + i,j,1 + k])**2 
+                + (pi[-1 + i,-1 + j,k] - pi[-1 + i,1 + j,k] - pi[1 + i,-1 + j,k] + pi[1 + i,1 + j,k])**2)/(h4)
+
+                cv = lin - 0.25*C4*q2offd/(aH2)
+
+                result[i,j,k] = -(av*pi[i,j,k]**2 + bv*pi[i,j,k] + cv)
+    
+    return result
+
+
+
+@njit(
+    ["f4(f4[:,:,::1], f4[:,:,::1], f4, f4, f4, f4, f4, f4, f4, f4, f4)"],
+    fastmath=True,
+    cache=True,
+    parallel=True,
+)
+def residual_error(
+    pi: npt.NDArray[np.float32],
+    b: npt.NDArray[np.float32],
+    h: np.float32,
+    C2: np.float32,
+    C4: np.float32,
+    alphaB: np.float32,
+    alphaM: np.float32,
+    H: np.float32,
+    a: np.float32,
+    M: np.float32,
+    rhom: np.float32) -> np.float32:
+
+    """Error on half of the residual of the quadratic operator  \\
+    residual = -(a pi^2 + b pi + c)  \\
+    error = sqrt[sum(residual**2)] \\
+    
+    Parameters
+    ----------
+    pi : npt.NDArray[np.float32]
+        Scalar field [N_cells_1d, N_cells_1d, N_cells_1d]
+    b : npt.NDArray[np.float32]
+        Density term [N_cells_1d, N_cells_1d, N_cells_1d]
+    h : np.float32
+        Grid size
+    C2, C4, alphaB, alphaM : np.float32
+        EFT params
+    H : np.float32
+        Hubble param
+    a : np.float32
+        scale factor
+    M : np.float32
+        time-dependent Planck mass
+    rhom : np.float32
+        matter density
+        
+    Returns
+    -------
+    npt.NDArray[np.float32]
+        Residual(x) [N_cells_1d, N_cells_1d, N_cells_1d]
+
+    """
+    ncells_1d = pi.shape[0]
+    result = np.float32(0)
+    for i in prange(-1, ncells_1d - 1):
+        for j in prange(-1, ncells_1d - 1):
+            for k in prange(-1, ncells_1d - 1):
+
+                h2 = h**2
+                h4 = h2**2
+                aH2 = (a*H)**2
+                
+                pins = pi[-1 + i,j,k] + pi[i,-1 + j,k] + pi[i,j,-1 + k] + pi[i,j,1 + k] + pi[i,1 + j,k] + pi[1 + i,j,k]
+                
+                av = (-6.*C4)/(h4 * aH2)
+
+                lin = (alphaB*(6.*alphaB - 12.*alphaM) + 6.*C2)/h2
+                nlin = -8*pins/(h4)
+                
+                bv = lin - 0.25*C4*nlin/(aH2)
+
+                lin = (
+                    (a**2*(-0.5*alphaB + 0.5*alphaM )*b[i,j,k]*rhom)/M**2 
+                    + ((alphaB*(-alphaB + 2.*alphaM) - C2)*(pins))/h2
+                )
+
+                # Coeff of pi^0 in Q2[pi,pi]
+                q2offd = -0.125*((pi[i,-1 + j,-1 + k] - pi[i,-1 + j,1 + k] - pi[i,1 + j,-1 + k] + pi[i,1 + j,1 + k])**2 
+                - 16.*((pi[i,j,-1 + k] + pi[i,j,1 + k])*(pi[i,-1 + j,k] + pi[i,1 + j,k]) + pi[-1 + i,j,k]*(pi[i,-1 + j,k] + pi[i,j,-1 + k] + pi[i,j,1 + k] + pi[i,1 + j,k]) + (pi[i,-1 + j,k] + pi[i,j,-1 + k] + pi[i,j,1 + k] + pi[i,1 + j,k])*pi[1 + i,j,k]) 
+                + (pi[-1 + i,j,-1 + k] - pi[-1 + i,j,1 + k] - pi[1 + i,j,-1 + k] + pi[1 + i,j,1 + k])**2 
+                + (pi[-1 + i,-1 + j,k] - pi[-1 + i,1 + j,k] - pi[1 + i,-1 + j,k] + pi[1 + i,1 + j,k])**2)/(h4)
+
+                cv = lin - 0.25*C4*q2offd/(aH2)
+
+                result += (av*pi[i,j,k]**2 + bv*pi[i,j,k] + cv)**2
+    
+    return np.sqrt(result)
+
+
 
 
 
