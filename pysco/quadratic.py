@@ -86,7 +86,7 @@ def operator(
                 bv = lin - onebyfour*C4*nlin/(aH2)
 
                 lin = (
-                    2*onebyfour(a**2*(-alphaB + alphaM )*b*rhom)/M**2 
+                    2*onebyfour*(a**2*(-alphaB + alphaM )*b[i,j,k]*rhom)/M**2 
                     + ((alphaB*(-alphaB + 2.*alphaM) - C2)*(pins))/h2
                 )
 
@@ -179,7 +179,7 @@ def solution_quadratic_equation(
     bv = lin - onebyfour*C4*nlin/(aH2)
 
     lin = (
-        2*onebyfour(a**2*(-alphaB + alphaM )*b*rhom)/M**2 
+        2*onebyfour*(a**2*(-alphaB + alphaM )*b*rhom)/M**2 
         + ((alphaB*(-alphaB + 2.*alphaM) - C2)*(pins))/h2
     )
 
@@ -258,8 +258,7 @@ def smoothing(
     a: np.float32,
     M: np.float32,
     rhom: np.float32,
-    n_smoothing: int,
-) -> None:
+    n_smoothing: int) -> None:
     
     """Smooth Chi field with several Gauss-Seidel iterations
 
