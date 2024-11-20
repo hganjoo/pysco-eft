@@ -187,16 +187,19 @@ def truncation_error(
     >>> # Call the truncation error estimator
     >>> error_estimate = truncation_error(potential, grid_size, parameters)
     """
-    if param["compute_additional_field"] and "fr" == param["theory"].casefold():
-        q = np.float32(param["fR_q"])
-        if param["fR_n"] == 1:
-            return cubic.truncation_error(x, b, h, q)
-        elif param["fR_n"] == 2:
-            return quartic.truncation_error(x, b, h, q)
-        else:
-            raise NotImplemented(
-                f"Only f(R) with n = 1 and 2, currently {param['fR_n']=}"
-            )
+    if param["compute_additional_field"]: 
+        if "fr" == param["theory"].casefold():
+            q = np.float32(param["fR_q"])
+            if param["fR_n"] == 1:
+                return cubic.truncation_error(x, b, h, q)
+            elif param["fR_n"] == 2:
+                return quartic.truncation_error(x, b, h, q)
+            else:
+                raise NotImplemented(
+                    f"Only f(R) with n = 1 and 2, currently {param['fR_n']=}"
+                )
+        elif "eft" == param["theory"].casefold():
+            print('eft')
     else:
         return laplacian.truncation_error(x, h)
 
