@@ -6,7 +6,7 @@ the growth factor based on the w0waCDM cosmology model.
 
 import numpy as np
 import pandas as pd
-from astropy.constants import pc
+from astropy.constants import pc,G
 from astropy.cosmology import Flatw0waCDM
 from scipy.interpolate import interp1d
 import numpy.typing as npt
@@ -27,6 +27,8 @@ def generate(param: pd.Series) -> List[interp1d]:
     -------
     List[interp1d]
         Interpolated functions [a(t), t(a), H(a), Dplus1(a), f1(a), Dplus2(a), f2(a), Dplus3a(a), f3a(a), Dplus3b(a), f3b(a), Dplus3c(a), f3c(a)]
+
+    - Modified by HG (14/11/24) to include alphaB and alphaM: Cusin et al EFT params
 
     Examples
     --------
@@ -56,6 +58,7 @@ def generate(param: pd.Series) -> List[interp1d]:
     param["Om_r"] = cosmo.Ogamma0 + cosmo.Onu0
     param["Om_lambda"] = cosmo.Ode0
 
+
     z_start = 200
     a_start = 1.0 / (1 + z_start)
     lna = np.linspace(np.log(a_start), 0, 100_000)
@@ -70,6 +73,29 @@ def generate(param: pd.Series) -> List[interp1d]:
     lnaexp_growth, d1, f1, d2, f2, d3a, f3a, d3b, f3b, d3c, f3c = growth_functions[
         :, mask
     ]
+
+    if "eft" == param["theory"].casefold:
+        alphaB0 = param["alphaB0"]
+        alphaM0 = param["alphaM0"]
+    else:
+        alphaB0 = 0.0
+        alphaM0 = 0.0
+
+    mpc_to_km = 1e3 * pc.value
+
+    om_m = param["Om_m"]
+    om_ma = om_m / (om_m + (1-om_m)*a**3)
+    alphaB = alphaB0*(1-om_ma) / (1-om_m)
+    alphaM = alphaM0*(1-om_ma) / (1-om_m)
+    HdotbyH2 = -1.5*om_ma
+    
+    Ia = np.exp(cumulative_trapezoid(y=alphaM,x=lna),initial=0) # M(a)^2 = I(a) / (8 pi G)
+    
+    #C2 = (-alphaM + alphaB*(1 + alphaM) + (1 + alphaB)*HdotbyH2 + (3*a**3*alphaB0*om_m)/(a**3*(1 - om_m) + om_m)**2 + rhom/(2*H**2*Ma**2))
+    C2 = -alphaM + alphaB*(1 + alphaM) + (1 + alphaB)*HdotbyH2 + (3*a**3*alphaB0*om_m)/(a**3*(1 - om_m) + om_m)**2 + 0.75*om_m/(E_array**2*Ia)
+    C4 = -4*alphaB + 2*alphaM
+
+    
 
     logging.warning(
         f"Write table in: {param['base']}/evolution_table_pysco_{param['extra']}.txt"
@@ -90,8 +116,13 @@ def generate(param: pd.Series) -> List[interp1d]:
             np.interp(lna, lnaexp_growth, f3b),
             np.interp(lna, lnaexp_growth, d3c),
             np.interp(lna, lnaexp_growth, f3c),
+            alphaB,
+            alphaM,
+            Ia,
+            C2,
+            C4
         ],
-        header="aexp, H/H0, t_supercomoving, dplus1, f1, dplus2, f2, dplus3a, f3a, dplus3b, f3b, dplus3c, f3c",
+        header="aexp, H/H0, t_supercomoving, dplus1, f1, dplus2, f2, dplus3a, f3a, dplus3b, f3b, dplus3c, f3c, alphaB, alphaM, I(a), C2, C4",
     )
     return [
         interp1d(t_supercomoving, lna, fill_value="extrapolate"),
@@ -107,6 +138,11 @@ def generate(param: pd.Series) -> List[interp1d]:
         interp1d(lnaexp_growth, f3b, fill_value="extrapolate"),
         interp1d(lnaexp_growth, d3c, fill_value="extrapolate"),
         interp1d(lnaexp_growth, f3c, fill_value="extrapolate"),
+        interp1d(lna, alphaB, fill_value="extrapolate"),
+        interp1d(lna, alphaM, fill_value="extrapolate"),
+        interp1d(lna, Ia, fill_value="extrapolate"),
+        interp1d(lna, C2, fill_value="extrapolate"),
+        interp1d(lna, C4, fill_value="extrapolate")
     ]
 
 
