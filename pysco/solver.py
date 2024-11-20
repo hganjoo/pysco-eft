@@ -106,6 +106,11 @@ def pm(
         param["parametrized_mu_z"] = np.float32(
             1 + param["parametrized_mu0"] * omega_lambda_z / param["Om_lambda"]
         )
+    elif "eft" == THEORY:
+        av = param["aexp"]
+        omm = param["Om_m"]
+        oma = omm / (omm + (1 - omm)*av**3)
+        param["parametrized_mu_z"] = np.power(oma,-1*param["alphaM0"]/(3 * (1 - omm)))
     else:
         param["parametrized_mu_z"] = np.float32(1)
 
