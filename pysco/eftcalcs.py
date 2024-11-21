@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 from scipy.interpolate import interp1d
 from typing import List
+from astropy.constants import pc,G
 
 def geteft(
         param: pd.Series,
@@ -29,5 +30,14 @@ def geteft(
     C2 = -alphaM + alphaB*(1 + alphaM) + (1 + alphaB)*HdotbyH2 + (3*a**3*alphaB0*om_m)/(a**3*(1 - om_m) + om_m)**2 + 1.5*Ia*om_m/(E**2)
     C4 = -4*alphaB + 2*alphaM
 
-    return [alphaB,alphaM,C2,C4]
+    mpc_to_km = 1e3 * pc.value  #   Mpc -> km
+    g = G.value * 1e-9  # m3/kg/s2 -> km3/kg/s2
+
+    H = param["H0"] / mpc_to_km # H to SI
+    H = H * param["unit_t"] # From SI to BU
+
+    g = g * param["unit_d"] * param["unit_t"]**2 # g from SI to BU
+    M = 1./np.sqrt(8*Ia*np.pi*g) # g is modified 
+
+    return [alphaB,alphaM,C2,C4,Ia,H,M]
 

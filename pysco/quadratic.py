@@ -13,7 +13,7 @@ from numba import config, njit, prange
 import mesh
 
 @njit(
-    ["f4[:,:,::1](f4[:,:,::1], f4[:,:,::1], f4, f4, f4, f4, f4, f4, f4, f4, f4)"],
+    ["f4[:,:,::1](f4[:,:,::1], f4[:,:,::1], f4, f4, f4, f4, f4, f4, f4, f4)"],
     fastmath=True,
     cache=True,
     parallel=True,
@@ -28,8 +28,7 @@ def operator(
     alphaM: np.float32,
     H: np.float32,
     a: np.float32,
-    M: np.float32,
-    rhom: np.float32) -> npt.NDArray[np.float32]:
+    M: np.float32) -> npt.NDArray[np.float32]:
     """Quadratic operator
 
     a pi^2 + b pi + c = 0 \\
@@ -51,8 +50,6 @@ def operator(
         scale factor
     M : np.float32
         time-dependent Planck mass
-    rhom : np.float32
-        matter density
         
     Returns
     -------
@@ -86,7 +83,7 @@ def operator(
                 bv = lin - onebyfour*C4*nlin/(aH2)
 
                 lin = (
-                    2*onebyfour*(a**2*(-alphaB + alphaM )*b[i,j,k]*rhom)/M**2 
+                    2*onebyfour*(a**2*(-alphaB + alphaM )*b[i,j,k])/M**2 
                     + ((alphaB*(-alphaB + 2.*alphaM) - C2)*(pins))/h2
                 )
 
@@ -106,7 +103,7 @@ def operator(
 
 
 @njit(
-        ["f4(f4[:,:,::1],f4,i4,i4,i4,f4,f4,f4,f4,f4,f4,f4,f4,f4)"],
+        ["f4(f4[:,:,::1],f4,i4,i4,i4,f4,f4,f4,f4,f4,f4,f4,f4)"],
         fastmath=True
 )
 def solution_quadratic_equation(
@@ -122,9 +119,7 @@ def solution_quadratic_equation(
     alphaM: np.float32,
     H: np.float32,
     a: np.float32,
-    M: np.float32,
-    rhom: np.float32
-) -> np.float32:
+    M: np.float32) -> np.float32:
     
     """Solution of the quadratic equation governing the pi (chi) field \\
     for the EFT parameters. 
@@ -150,8 +145,6 @@ def solution_quadratic_equation(
         scale factor
     M : np.float32
         time-dependent Planck mass
-    rhom : np.float32
-        matter density
 
 
     Returns
@@ -179,7 +172,7 @@ def solution_quadratic_equation(
     bv = lin - onebyfour*C4*nlin/(aH2)
 
     lin = (
-        2*onebyfour*(a**2*(-alphaB + alphaM )*b*rhom)/M**2 
+        2*onebyfour*(a**2*(-alphaB + alphaM )*b)/M**2 
         + ((alphaB*(-alphaB + 2.*alphaM) - C2)*(pins))/h2
     )
 
@@ -196,7 +189,7 @@ def solution_quadratic_equation(
 
 
 @njit(
-    ["void(f4[:,:,::1], f4[:,:,::1], f4, f4, f4, f4, f4, f4, f4, f4, f4)"],
+    ["void(f4[:,:,::1], f4[:,:,::1], f4, f4, f4, f4, f4, f4, f4, f4)"],
     fastmath=True,
     cache=True
 )
@@ -210,8 +203,7 @@ def jacobi(
     alphaM: np.float32,
     H: np.float32,
     a: np.float32,
-    M: np.float32,
-    rhom: np.float32) -> None:
+    M: np.float32) -> None:
     """Gauss-Seidel quadratic equation solver \\
     Solve the roots of u in the equation: \\
     a u^2 + bu + c = 0 \\
@@ -233,9 +225,6 @@ def jacobi(
         scale factor
     M : np.float32
         time-dependent Planck mass
-    rhom : np.float32
-        matter density
-        
     """
 
     ncells_1d = pi.shape[0]
@@ -243,7 +232,7 @@ def jacobi(
     for ix in range(-1,ncells_1d - 1):
             for iy in range(-1,ncells_1d - 1):
                 for iz in range(-1,ncells_1d - 1):
-                    pi[ix,iy,iz] = solution_quadratic_equation(pi,b[ix,iy,iz],ix,iy,iz,h,C2,C4,alphaB,alphaM,H,a,M,rhom)
+                    pi[ix,iy,iz] = solution_quadratic_equation(pi,b[ix,iy,iz],ix,iy,iz,h,C2,C4,alphaB,alphaM,H,a,M)
                     
 
 def smoothing(
@@ -257,7 +246,6 @@ def smoothing(
     H: np.float32,
     a: np.float32,
     M: np.float32,
-    rhom: np.float32,
     n_smoothing: int) -> None:
     
     """Smooth Chi field with several Jacobi iterations
@@ -276,19 +264,17 @@ def smoothing(
         scale factor
     M : np.float32
         time-dependent Planck mass
-    rhom : np.float32
-        matter density
     n_smoothing : int
         number of smoothing iterations
 
     """
     
     for _ in range(n_smoothing):
-        jacobi(pi, b, h, C2, C4, alphaB, alphaM, H, a, M, rhom, n_smoothing)
+        jacobi(pi, b, h, C2, C4, alphaB, alphaM, H, a, M, n_smoothing)
 
 
 @njit(
-    ["f4[:,:,::1](f4[:,:,::1], f4[:,:,::1], f4, f4, f4, f4, f4, f4, f4, f4, f4)"],
+    ["f4[:,:,::1](f4[:,:,::1], f4[:,:,::1], f4, f4, f4, f4, f4, f4, f4, f4)"],
     fastmath=True,
     cache=True,
     parallel=True,
@@ -303,8 +289,7 @@ def residual(
     alphaM: np.float32,
     H: np.float32,
     a: np.float32,
-    M: np.float32,
-    rhom: np.float32) -> npt.NDArray[np.float32]:
+    M: np.float32) -> npt.NDArray[np.float32]:
 
     """Residual of Quadratic operator
 
@@ -327,8 +312,6 @@ def residual(
         scale factor
     M : np.float32
         time-dependent Planck mass
-    rhom : np.float32
-        matter density
         
     Returns
     -------
@@ -356,7 +339,7 @@ def residual(
                 bv = lin - 0.25*C4*nlin/(aH2)
 
                 lin = (
-                    (a**2*(-0.5*alphaB + 0.5*alphaM )*b[i,j,k]*rhom)/M**2 
+                    (a**2*(-0.5*alphaB + 0.5*alphaM )*b[i,j,k])/M**2 
                     + ((alphaB*(-alphaB + 2.*alphaM) - C2)*(pins))/h2
                 )
 
@@ -375,7 +358,7 @@ def residual(
 
 
 @njit(
-    ["f4(f4[:,:,::1], f4[:,:,::1], f4, f4, f4, f4, f4, f4, f4, f4, f4)"],
+    ["f4(f4[:,:,::1], f4[:,:,::1], f4, f4, f4, f4, f4, f4, f4, f4)"],
     fastmath=True,
     cache=True,
     parallel=True,
@@ -390,8 +373,7 @@ def residual_error(
     alphaM: np.float32,
     H: np.float32,
     a: np.float32,
-    M: np.float32,
-    rhom: np.float32) -> np.float32:
+    M: np.float32) -> np.float32:
 
     """Error on half of the residual of the quadratic operator  \\
     residual = -(a pi^2 + b pi + c)  \\
@@ -413,9 +395,6 @@ def residual_error(
         scale factor
     M : np.float32
         time-dependent Planck mass
-    rhom : np.float32
-        matter density
-        
     Returns
     -------
     np.float32
@@ -442,7 +421,7 @@ def residual_error(
                 bv = lin - 0.25*C4*nlin/(aH2)
 
                 lin = (
-                    (a**2*(-0.5*alphaB + 0.5*alphaM )*b[i,j,k]*rhom)/M**2 
+                    (a**2*(-0.5*alphaB + 0.5*alphaM )*b[i,j,k])/M**2 
                     + ((alphaB*(-alphaB + 2.*alphaM) - C2)*(pins))/h2
                 )
 
@@ -460,7 +439,7 @@ def residual_error(
 
 
 @njit(
-    ["f4(f4[:,:,::1], f4[:,:,::1], f4, f4, f4, f4, f4, f4, f4, f4, f4)"],
+    ["f4(f4[:,:,::1], f4[:,:,::1], f4, f4, f4, f4, f4, f4, f4, f4)"],
     fastmath=True,
     cache=True,
     parallel=True,
@@ -475,8 +454,7 @@ def truncation_error(
     alphaM: np.float32,
     H: np.float32,
     a: np.float32,
-    M: np.float32,
-    rhom: np.float32) -> np.float32:
+    M: np.float32) -> np.float32:
 
     """
     Truncation error estimator \\
@@ -500,9 +478,7 @@ def truncation_error(
         scale factor
     M : np.float32
         time-dependent Planck mass
-    rhom : np.float32
-        matter density
-        
+    
     Returns
     -------
     np.float32
@@ -511,8 +487,8 @@ def truncation_error(
     """
 
     ncells_1d = pi.shape[0]
-    RLx = mesh.restriction(operator(pi,b,h,C2,C4,alphaB,alphaM,H,a,M,rhom))
-    LRx = operator(mesh.restriction(pi), mesh.restriction(b), 2 * h ,C2,C4,alphaB,alphaM,H,a,M,rhom)
+    RLx = mesh.restriction(operator(pi,b,h,C2,C4,alphaB,alphaM,H,a,M))
+    LRx = operator(mesh.restriction(pi), mesh.restriction(b), 2 * h ,C2,C4,alphaB,alphaM,H,a,M)
     result = 0.0
     for i in prange(-1, ncells_1d - 1):
         for j in prange(-1, ncells_1d - 1):
