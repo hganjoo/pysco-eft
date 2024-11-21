@@ -17,6 +17,8 @@ import multigrid
 import utils
 import cubic
 import quartic
+import quadratic
+import eftcalcs
 import logging
 import fourier
 import mond
@@ -380,10 +382,34 @@ def get_additional_field(
                     f"{param['linear_newton_solver']=}, should be 'multigrid' or 'fft_7pt'"
                 )
             return additional_field
+        
+        case "eft":
+
+            eft_quantities = eftcalcs.geteft(param,tables)
+            param["alphaB"] = eft_quantities[0]
+            param["alphaM"] = eft_quantities[1]
+            param["C2"] = eft_quantities[2]
+            param["C4"] = eft_quantities[3]
+            param["H"] = eft_quantities[4]
+            param["M"] = eft_quantities[5]
+
+            dens_term = utils.linear_operator(density, 1.0, -1.0)
+
+            additional_field = initialise_potential(
+                additional_field, dens_term, h, param
+            )
+            chi = additional_field
+            chi = multigrid.FAS(chi, dens_term, h, param)
+
+
+
         case _:
             raise ValueError(
-                f"{param['theory']=}, should be 'newton', 'fr', 'parametrized' or 'mond'"
+                f"{param['theory']=}, should be 'newton', 'fr', 'eft', 'parametrized' or 'mond'"
             )
+        
+
+
 
 
 def rhs_poisson(

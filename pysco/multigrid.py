@@ -12,6 +12,7 @@ import pandas as pd
 import laplacian
 import cubic
 import quartic
+import quadratic
 import mesh
 import utils
 import logging
@@ -199,7 +200,13 @@ def truncation_error(
                     f"Only f(R) with n = 1 and 2, currently {param['fR_n']=}"
                 )
         elif "eft" == param["theory"].casefold():
-            print('eft')
+            return quadratic.truncation_error(x, b, h,
+                                 param["C2"], param["C4"], 
+                                 param["alphaB"],param["alphaM"],
+                                 param["H"],
+                                 param["aexp"],
+                                 param["M"])
+            
     else:
         return laplacian.truncation_error(x, h)
 
@@ -259,7 +266,17 @@ def residual_error(
             raise NotImplemented(
                 f"Only f(R) with n = 1 and 2, currently {param['fR_n']=}"
             )
-
+    elif (
+        param["compute_additional_field"]
+        and "eft" == param["theory"].casefold()
+    ):
+        
+        return quadratic.residual_error(x, b, h,
+                                 param["C2"], param["C4"], 
+                                 param["alphaB"],param["alphaM"],
+                                 param["H"],
+                                 param["aexp"],
+                                 param["M"])
     else:
         # return laplacian.residual_error_half(x, b, h)
         return laplacian.residual_error(x, b, h)
@@ -317,6 +334,17 @@ def restrict_residual(
             raise NotImplemented(
                 f"Only f(R) with n = 1 and 2, currently {param['fR_n']=}"
             )
+        
+    elif (
+        param["compute_additional_field"]
+        and "eft" == param["theory"].casefold()
+    ):
+        return mesh.restriction(quadratic.residual(x, b, h, 
+                            param["C2"], param["C4"],
+                            param["alphaB"],param["alphaM"],
+                            param["H"],
+                            param["aexp"],
+                            param["M"] ) )
     else:
         return laplacian.restrict_residual(x, b, h)
         # return laplacian.restrict_residual_half(x, b, h)
@@ -381,6 +409,15 @@ def smoothing(
             raise NotImplemented(
                 f"Only f(R) with n = 1 and 2, currently {param['fR_n']=}"
             )
+    elif param["compute_additional_field"] and "eft" == param["theory"].casefold():
+        quadratic.smoothing(x, b, h, 
+                            param["C2"], param["C4"],
+                            param["alphaB"],param["alphaM"],
+                            param["H"],
+                            param["aexp"],
+                            param["M"],
+                            n_smoothing)
+    
     else:
         laplacian.smoothing(x, b, h, n_smoothing)
 
@@ -447,6 +484,14 @@ def operator(
             raise NotImplemented(
                 f"Only f(R) with n = 1 and 2, currently {param['fR_n']=}"
             )
+        
+    elif param["compute_additional_field"] and "eft" == param["theory"].casefold():
+        return quadratic.operator(x, b, h,
+                           param["C2"], param["C4"],
+                           param["alphaB"],param["alphaM"],
+                           param["H"],
+                           param["aexp"],
+                           param["M"])
     else:
         return laplacian.operator(x, h)
 

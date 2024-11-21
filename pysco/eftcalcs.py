@@ -39,5 +39,5 @@ def geteft(
     g = g * param["unit_d"] * param["unit_t"]**2 # g from SI to BU
     M = 1./np.sqrt(8*Ia*np.pi*g) # g is modified 
 
-    return [alphaB,alphaM,C2,C4,Ia,H,M]
+    return [alphaB,alphaM,C2,C4,H,M]
 
