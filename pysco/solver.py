@@ -198,6 +198,14 @@ def pm(
                 param["fR_n"],
                 param["gradient_stencil_order"],
             )
+
+    elif "eft" == param["theory"].casefold():
+        prefac = param["alphaB"] - param["alphaM"]
+        force = mesh.derivative_eft(
+            potential,
+            additional_field,
+            prefac
+        )
     else:
         if LINEAR_NEWTON_SOLVER == "full_fft":
             force = fft_force(rhs, param, param["save_pk"])
@@ -400,7 +408,7 @@ def get_additional_field(
             )
             chi = additional_field
             chi = multigrid.FAS(chi, dens_term, h, param)
-
+            return chi
 
 
         case _:

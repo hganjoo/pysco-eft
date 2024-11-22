@@ -2232,6 +2232,77 @@ def add_derivative_fR(
                 raise ValueError(f"Unsupported: {gradient_order=}")
     else:
         raise ValueError(f"Unsupported: {fR_n=}")
+    
+
+@utils.time_me
+@njit(
+    ["f4[:,:,:,::1](f4[:,:,::1], f4[:,:,::1], f4)"],
+    fastmath=True,
+    cache=True,
+    parallel=True,
+)
+def derivative_eft(
+    a: npt.NDArray[np.float32],
+    b: npt.NDArray[np.float32],
+    f: np.float32,
+) -> npt.NDArray[np.float32]:
+    """Spatial derivatives of a scalar field on a grid
+
+    Three-point stencil derivative with finite differences
+
+    grad(a) + f*grad(b) // For EFT
+
+
+    Parameters
+    ----------
+    a : npt.NDArray[np.float32]
+        Field [N_cells_1d, N_cells_1d, N_cells_1d]
+    b : npt.NDArray[np.float32]
+        Additional Field [N_cells_1d, N_cells_1d, N_cells_1d]
+        For EFT: chi field in supercomoving coords
+    f : np.float32
+        Multiplicative factor to additional field
+
+    Returns
+    -------
+    npt.NDArray[np.float32]
+        Field derivative [N_cells_1d, N_cells_1d, N_cells_1d, 3]
+
+    """
+    ncells_1d = a.shape[0]
+    inv2h = np.float32(0.5 * ncells_1d)
+    result = np.empty((ncells_1d, ncells_1d, ncells_1d, 3), dtype=np.float32)
+    for i in prange(-1, ncells_1d - 1):
+        ip1 = i + 1
+        im1 = i - 1
+        for j in prange(-1, ncells_1d - 1):
+            jp1 = j + 1
+            jm1 = j - 1
+            for k in prange(-1, ncells_1d - 1):
+                kp1 = k + 1
+                km1 = k - 1
+                result[i, j, k, 0] = inv2h * (
+                    (
+                        -a[im1, j, k]
+                        + a[ip1, j, k]
+                        + f * (-b[im1, j, k] + b[ip1, j, k])
+                    )
+                )
+                result[i, j, k, 1] = inv2h * (
+                    (
+                        -a[i, jm1, k]
+                        + a[i, jp1, k]
+                        + f * (-b[i, jm1, k] + b[i, jp1, k])
+                    )
+                )
+                result[i, j, k, 2] = inv2h * (
+                    (
+                        -a[i, j, km1]
+                        + a[i, j, kp1]
+                        + f * (-b[i, j, km1] + b[i, j, kp1])
+                    )
+                )
+    return result
 
 
 # TODO: To be improved when numba atomics are available
