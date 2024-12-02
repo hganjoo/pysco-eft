@@ -280,6 +280,13 @@ def initialise_potential(
                 raise NotImplemented(
                     f"Only f(R) with n = 1 and 2, currently {param['fR_n']=}"
                 )
+        elif (
+            param["compute_additional_field"]
+            and "eft" == param["theory"].casefold()
+        ):
+            potential = quadratic.initialise_potential(rhs,h,param["C2"],param["alphaB"],param["alphaM"],
+                                                       param["aexp"],param["M"])
+        
         else:
             minus_one_sixth_h2 = np.float32(-(h**2) / 6)
             potential = utils.prod_vector_scalar(rhs, minus_one_sixth_h2)

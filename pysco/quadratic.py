@@ -499,7 +499,7 @@ def truncation_error(
 
 
 @njit(
-    ["f4[:,:,::1](f4[:,:,::1], f4, f4, f4, f4, f4, f4, f4)"],
+    ["f4[:,:,::1](f4[:,:,::1], f4, f4, f4, f4, f4, f4)"],
     fastmath=True,
     cache=True,
     parallel=True,
@@ -511,9 +511,7 @@ def initialise_potential(
     alphaB: np.float32,
     alphaM: np.float32,
     a: np.float32,
-    M: np.float32,
-    rhom: np.float32
-    
+    M: np.float32
 ) -> npt.NDArray[np.float32]:
     """
     HG: 14/11/2024
@@ -547,19 +545,17 @@ def initialise_potential(
 
     
     """
-
-
     xi = alphaB - alphaM
     nu = -C2 - alphaB*(xi - alphaM)
     mu_chi = xi/nu
     
     pi = np.empty_like(b)
+    one_by_six = np.float32(1./6)
     ncells_1d = b.shape[0]
-    for i in range(ncells_1d):
-        for j in range(ncells_1d):
-            for k in range(ncells_1d):
-                pi[i, j, k] = (1./6)*((pi[-1 + i,j,k] + pi[i,-1 + j,k] + pi[i,j,-1 + k] + pi[i,j,1 + k] + pi[i,1 + j,k] + pi[1 + i,j,k]) 
-                                      - h*h*0.5*a*a*mu_chi*rhom*b[i,j,k]/(M*M))
+    for i in prange(ncells_1d):
+        for j in prange(ncells_1d):
+            for k in prange(ncells_1d):
+                pi[i, j, k] = - one_by_six*mu_chi*h*h*0.5*a*a*b[i,j,k]/(M*M)
     return pi
 
 
