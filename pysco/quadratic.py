@@ -270,7 +270,7 @@ def smoothing(
     """
     
     for _ in range(n_smoothing):
-        jacobi(pi, b, h, C2, C4, alphaB, alphaM, H, a, M, n_smoothing)
+        jacobi(pi, b, h, C2, C4, alphaB, alphaM, H, a, M)
 
 
 @njit(
