@@ -319,7 +319,9 @@ def residual(
         Residual(x) [N_cells_1d, N_cells_1d, N_cells_1d]
 
     """
-    ncells_1d = pi.shape[0]
+
+    return -1*operator(pi,b,h,C2,C4,alphaB,alphaM,H,a,M)
+    """ ncells_1d = pi.shape[0]
     result = np.empty_like(pi)
     for i in prange(-1, ncells_1d - 1):
         for j in prange(-1, ncells_1d - 1):
@@ -354,7 +356,7 @@ def residual(
                 result[i,j,k] = -(av*pi[i,j,k]**2 + bv*pi[i,j,k] + cv)
     
     return result
-
+ """
 
 
 @njit(
@@ -402,6 +404,19 @@ def residual_error(
 
     """
     ncells_1d = pi.shape[0]
+    res = operator(pi,b,h,C2,C4,alphaB,alphaM,H,a,M)
+    result = 0.0
+
+    for i in prange(-1, ncells_1d - 1):
+        for j in prange(-1, ncells_1d - 1):
+            for k in prange(-1, ncells_1d - 1):
+                result += res[i,j,k]**2
+    
+    return np.sqrt(result)
+    
+
+
+    """ ncells_1d = pi.shape[0]
     result = 0.0
     for i in prange(-1, ncells_1d - 1):
         for j in prange(-1, ncells_1d - 1):
@@ -436,7 +451,7 @@ def residual_error(
                 result += (av*pi[i,j,k]**2 + bv*pi[i,j,k] + cv)**2
     
     return np.sqrt(result)
-
+ """
 
 @njit(
     ["f4(f4[:,:,::1], f4[:,:,::1], f4, f4, f4, f4, f4, f4, f4, f4)"],
@@ -486,7 +501,7 @@ def truncation_error(
 
     """
 
-    ncells_1d = pi.shape[0]
+    ncells_1d = pi.shape[0] >> 1
     RLx = mesh.restriction(operator(pi,b,h,C2,C4,alphaB,alphaM,H,a,M))
     LRx = operator(mesh.restriction(pi), mesh.restriction(b), 2 * h ,C2,C4,alphaB,alphaM,H,a,M)
     result = 0.0
