@@ -411,7 +411,7 @@ def get_additional_field(
             dens_term = utils.linear_operator(density, 1.0, -1.0)
 
             additional_field = initialise_potential(
-                additional_field, dens_term, h, param
+                additional_field, dens_term, h, param,tables
             )
             chi = additional_field
             chi = multigrid.FAS(chi, dens_term, h, param)
