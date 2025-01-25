@@ -184,8 +184,20 @@ def solution_quadratic_equation(
 
     cv = lin - onebyfour*C4*q2offd/(aH2)
 
-    dsc = np.sqrt(bv**2 - 4*av*cv)
-    return (-bv - dsc) / (2*av)
+    '''if bv*bv - 4*av*cv < 0:
+        print('Cvals:',av,bv,cv,bv**2 - 4*av*cv)
+    
+    if (x==1)&(y==1)&(z==1):
+        print('Dsc111:',bv**2 - 4*av*cv)'''
+    dterm = bv**2 - 4*av*cv
+    if dterm>0:
+        qsol =  (-bv - np.sqrt(dterm)) / (2*av)
+    else:
+        qsol = -0.5*bv/av
+
+    
+
+    return qsol
 
 
 @njit(
@@ -228,11 +240,12 @@ def jacobi(
     """
 
     ncells_1d = pi.shape[0]
+    pi_old = np.copy(pi) # debug?
 
     for ix in range(-1,ncells_1d - 1):
             for iy in range(-1,ncells_1d - 1):
                 for iz in range(-1,ncells_1d - 1):
-                    pi[ix,iy,iz] = solution_quadratic_equation(pi,b[ix,iy,iz],ix,iy,iz,h,C2,C4,alphaB,alphaM,H,a,M)
+                    pi[ix,iy,iz] = solution_quadratic_equation(pi_old,b[ix,iy,iz],ix,iy,iz,h,C2,C4,alphaB,alphaM,H,a,M)
                     
 
 def smoothing(
@@ -570,7 +583,7 @@ def initialise_potential(
     for i in prange(ncells_1d):
         for j in prange(ncells_1d):
             for k in prange(ncells_1d):
-                pi[i, j, k] = - one_by_six*mu_chi*h*h*0.5*a*a*b[i,j,k]/(M*M)
+                pi[i, j, k] = - one_by_six*mu_chi*h*h*a*b[i,j,k]
     return pi
 
 

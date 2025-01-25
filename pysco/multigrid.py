@@ -709,7 +709,11 @@ def F_cycle_FAS(
     """
     h = np.float32(0.5 ** (param["ncoarse"] - nlevel))
     two = np.float32(2)
+    #if param['aexp'] > 0.55:
+        #print('Before:',x)
     smoothing(x, b, h, param["Npre"], param, rhs)
+    #if param['aexp'] > 0.55:
+        #print('After: ',x)
     res_c = restrict_residual(x, b, h, param)
     x_c = mesh.restriction(x)
     x_corr_c = x_c.copy()
@@ -723,7 +727,10 @@ def F_cycle_FAS(
         F_cycle_FAS(x_corr_c, b_c, param, nlevel + 1, res_c)
     res_c = 0
     utils.add_vector_scalar_inplace(x_corr_c, x_c, np.float32(-1))
-    mesh.add_prolongation_half(x, x_corr_c)
+    if param["theory"].casefold() == "eft":
+        mesh.add_prolongation(x, x_corr_c)
+    else:
+        mesh.add_prolongation_half(x, x_corr_c)
     x_corr_c = 0
     smoothing(x, b, h, param["Npre"], param, rhs)
 
@@ -741,9 +748,13 @@ def F_cycle_FAS(
     res_c = 0
     utils.add_vector_scalar_inplace(x_corr_c, x_c, np.float32(-1))
     x_c = 0
-    mesh.add_prolongation_half(x, x_corr_c)
+    if param["theory"].casefold() == "eft":
+        mesh.add_prolongation(x, x_corr_c)
+    else:
+        mesh.add_prolongation_half(x, x_corr_c)
     x_corr_c = 0
     smoothing(x, b, h, param["Npost"], param, rhs)
+    
 
 
 @utils.time_me

@@ -144,6 +144,7 @@ def pm(
 
     param["compute_additional_field"] = True
     additional_field = get_additional_field(additional_field, density, h, param, tables)
+    
 
     # TODO: Try to keep Phidot and initialise Phi_i = Phi_(i-1) + Phidot*dt
     param["compute_additional_field"] = False
@@ -407,12 +408,30 @@ def get_additional_field(
             param["C4"] = eft_quantities[3]
             param["H"] = eft_quantities[4]
             param["M"] = eft_quantities[5]
+            print(eft_quantities)
 
             dens_term = utils.linear_operator(density, 1.0, -1.0)
 
+            # Debug
+
+            print('Mean chi: {}, dens: {:.4e}, stdev: {:.4e}'.format(np.isnan(additional_field).sum(),dens_term.mean(),dens_term.std()))
+            
+            try:
+                op = quadratic.solution_quadratic_equation(additional_field,dens_term[1,1,1],
+                                                       1,1,1,
+                                                       h,
+                                                       param['C2'],param['C4'],param['alphaB'],param['alphaM'],
+                                                       param['H'],param['aexp'],param['M'])
+                print('op111: {:.4e}'.format(op))
+
+            except:
+                pass
             additional_field = initialise_potential(
                 additional_field, dens_term, h, param,tables
             )
+
+            # Debug end
+
             chi = additional_field
             chi = multigrid.FAS(chi, dens_term, h, param)
             return chi
