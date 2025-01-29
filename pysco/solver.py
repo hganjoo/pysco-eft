@@ -201,11 +201,11 @@ def pm(
             )
 
     elif "eft" == param["theory"].casefold():
-        half_c2 = np.float32(
-            0.5
+        c2 = np.float32(
+            -1.0
             * (c.value * 1e-3 * param["unit_t"] / (param["unit_l"] * param["aexp"]))
             ** 2)
-        prefac = half_c2*(param["alphaB"] - param["alphaM"])
+        prefac = (param["alphaB"] - param["alphaM"])
         force = mesh.derivative_eft(
             potential,
             additional_field,
@@ -416,13 +416,15 @@ def get_additional_field(
 
             #dens_term = utils.linear_operator(density, 1.0, -1.0)
             f1 = np.float32(
-            1.5 * param["aexp"] * param["Om_m"] * param["parametrized_mu_z"])
+            1.5 * param["aexp"] * param["Om_m"] * param["parametrized_mu_z"] * param["unit_t"]**2
+        )
             f2 = -f1
+            
             dens_term = utils.linear_operator(density, f1, f2)
 
             # Debug
 
-            print('Mean chi: {}, dens: {:.4e}, stdev: {:.4e}'.format(np.isnan(additional_field).sum(),dens_term.mean(),dens_term.std()))
+            print('Mean chi: {}, dens: {:.4e}, stdev: {:.4e}'.format(additional_field.mean(),dens_term.mean(),dens_term.std()))
             
             try:
                 op = quadratic.solution_quadratic_equation(additional_field,dens_term[1,1,1],

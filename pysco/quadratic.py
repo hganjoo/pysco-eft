@@ -82,15 +82,15 @@ def operator(
                 
                 bv = lin - onebyfour*C4*nlin/(aH2)
 
-                '''lin = (
+                lin = (
                     2*onebyfour*(a**2*(-alphaB + alphaM )*b[i,j,k])/M**2 
                     + ((alphaB*(-alphaB + 2.*alphaM) - C2)*(pins))/h2
-                )'''
+                )
 
-                lin = (
+                '''lin = (
                     (alphaM - alphaB) * b[i,j,k]
                     + ((alphaB*(-alphaB + 2.*alphaM) - C2)*(pins))/h2
-                )
+                )'''
 
                 # Coeff of pi^0 in Q2[pi,pi]
                 q2offd = -onebyeight*((pi[i,-1 + j,-1 + k] - pi[i,-1 + j,1 + k] - pi[i,1 + j,-1 + k] + pi[i,1 + j,1 + k])**2 
@@ -176,15 +176,15 @@ def solution_quadratic_equation(
     
     bv = lin - onebyfour*C4*nlin/(aH2)
 
-    '''lin = (
+    lin = (
         2*onebyfour*(a**2*(-alphaB + alphaM )*b)/M**2 
         + ((alphaB*(-alphaB + 2.*alphaM) - C2)*(pins))/h2
-    )'''
+    )
 
-    lin = (
+    '''lin = (
                     (alphaM - alphaB) * b
                     + ((alphaB*(-alphaB + 2.*alphaM) - C2)*(pins))/h2
-                )
+                )'''
 
     # Coeff of pi^0 in Q2[pi,pi]
     q2offd = -onebyeight*((pi[x,-1 + y,-1 + z] - pi[x,-1 + y,1 + z] - pi[x,1 + y,-1 + z] + pi[x,1 + y,1 + z])**2 
