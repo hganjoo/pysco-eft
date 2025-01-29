@@ -82,8 +82,13 @@ def operator(
                 
                 bv = lin - onebyfour*C4*nlin/(aH2)
 
-                lin = (
+                '''lin = (
                     2*onebyfour*(a**2*(-alphaB + alphaM )*b[i,j,k])/M**2 
+                    + ((alphaB*(-alphaB + 2.*alphaM) - C2)*(pins))/h2
+                )'''
+
+                lin = (
+                    (alphaM - alphaB) * b[i,j,k]
                     + ((alphaB*(-alphaB + 2.*alphaM) - C2)*(pins))/h2
                 )
 
