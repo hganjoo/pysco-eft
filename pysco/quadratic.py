@@ -176,10 +176,15 @@ def solution_quadratic_equation(
     
     bv = lin - onebyfour*C4*nlin/(aH2)
 
-    lin = (
+    '''lin = (
         2*onebyfour*(a**2*(-alphaB + alphaM )*b)/M**2 
         + ((alphaB*(-alphaB + 2.*alphaM) - C2)*(pins))/h2
-    )
+    )'''
+
+    lin = (
+                    (alphaM - alphaB) * b
+                    + ((alphaB*(-alphaB + 2.*alphaM) - C2)*(pins))/h2
+                )
 
     # Coeff of pi^0 in Q2[pi,pi]
     q2offd = -onebyeight*((pi[x,-1 + y,-1 + z] - pi[x,-1 + y,1 + z] - pi[x,1 + y,-1 + z] + pi[x,1 + y,1 + z])**2 
@@ -194,13 +199,15 @@ def solution_quadratic_equation(
     
     if (x==1)&(y==1)&(z==1):
         print('Dsc111:',bv**2 - 4*av*cv)'''
-    dterm = bv**2 - 4*av*cv
+    '''dterm = bv**2 - 4*av*cv
     if dterm>0:
         qsol =  (-bv - np.sqrt(dterm)) / (2*av)
     else:
-        qsol = -0.5*bv/av
-
+        qsol = -0.5*bv/av'''
     
+
+    dterm = bv**2 - 4*av*cv
+    qsol =  (-bv - np.sqrt(dterm)) / (2*av)
 
     return qsol
 
@@ -588,7 +595,7 @@ def initialise_potential(
     for i in prange(ncells_1d):
         for j in prange(ncells_1d):
             for k in prange(ncells_1d):
-                pi[i, j, k] = - one_by_six*mu_chi*h*h*a*b[i,j,k]
+                pi[i, j, k] = - one_by_six*mu_chi*h*h*b[i,j,k]
     return pi
 
 
