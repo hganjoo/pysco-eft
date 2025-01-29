@@ -415,11 +415,9 @@ def get_additional_field(
             print(eft_quantities)
 
             #dens_term = utils.linear_operator(density, 1.0, -1.0)
-            f1 = np.float32(
-            1.5 * param["aexp"] * param["Om_m"] * param["parametrized_mu_z"] * param["unit_t"]**2
-        )
+            f1 = param["unit_d"]
+            #f1 = 1.0
             f2 = -f1
-            
             dens_term = utils.linear_operator(density, f1, f2)
 
             # Debug
