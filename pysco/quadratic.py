@@ -180,7 +180,7 @@ def solution_quadratic_equation(
 
     lin = (
         2*onebyfour*(a**2*(-alphaB + alphaM )*b)/M**2 
-        + ((alphaB*(-alphaB + 2.*alphaM) - C2)*(pins))/h2
+        + ((alphaB*(-alphaB + two*alphaM) - C2)*(pins))/h2
     )
 
     '''lin = (
@@ -209,7 +209,7 @@ def solution_quadratic_equation(
     
 
     dterm = bv**2 - 4*av*cv
-    qsol =  (-bv - np.sqrt(dterm)) / (2*av)
+    qsol =  (-bv - np.sqrt(dterm)) / (two*av)
 
     return qsol
 
