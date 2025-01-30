@@ -71,13 +71,14 @@ def operator(
                 onebyeight = np.float32(0.125)
                 six = np.float32(6)
                 eight = np.float32(8)
+                two = np.float32(2)
 
                 
                 pins = pi[-1 + i,j,k] + pi[i,-1 + j,k] + pi[i,j,-1 + k] + pi[i,j,1 + k] + pi[i,1 + j,k] + pi[1 + i,j,k]
                 
                 av = (-six*C4)/(h4 * aH2)
 
-                lin = (alphaB*(six*alphaB - six*alphaM) + six*C2)/h2
+                lin = (alphaB*(six*alphaB - two*six*alphaM) + six*C2)/h2
                 nlin = -eight*pins/(h4)
                 
                 bv = lin - onebyfour*C4*nlin/(aH2)
@@ -165,13 +166,14 @@ def solution_quadratic_equation(
     onebyeight = np.float32(0.125)
     six = np.float32(6)
     eight = np.float32(8)
+    two = np.float32(2)
 
     
     pins = pi[-1 + x,y,z] + pi[x,-1 + y,z] + pi[x,y,-1 + z] + pi[x,y,1 + z] + pi[x,1 + y,z] + pi[1 + x,y,z]
     
     av = (-six*C4)/(h4 * aH2)
 
-    lin = (alphaB*(six*alphaB - six*alphaM) + six*C2)/h2
+    lin = (alphaB*(six*alphaB - two*six*alphaM) + six*C2)/h2
     nlin = -eight*pins/(h4)
     
     bv = lin - onebyfour*C4*nlin/(aH2)
