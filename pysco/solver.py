@@ -112,7 +112,7 @@ def pm(
         av = param["aexp"]
         omm = param["Om_m"]
         oma = omm / (omm + (1 - omm)*av**3)
-        param["parametrized_mu_z"] = np.power(oma,-1*param["alphaM0"]/(3 * (1 - omm)))
+        param["parametrized_mu_z"] = np.power(oma,param["alphaM0"]/(3 * (1 - omm)))
     else:
         param["parametrized_mu_z"] = np.float32(1)
 
