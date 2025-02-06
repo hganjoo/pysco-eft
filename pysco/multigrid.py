@@ -204,8 +204,8 @@ def truncation_error(
                                  param["C2"], param["C4"], 
                                  param["alphaB"],param["alphaM"],
                                  param["H"],
-                                 param["aexp"],
-                                 param["M"])
+                                 param["aexp"]
+                                 )
             
     else:
         return laplacian.truncation_error(x, h)
@@ -275,8 +275,8 @@ def residual_error(
                                  param["C2"], param["C4"], 
                                  param["alphaB"],param["alphaM"],
                                  param["H"],
-                                 param["aexp"],
-                                 param["M"])
+                                 param["aexp"]
+                                 )
     else:
         # return laplacian.residual_error_half(x, b, h)
         return laplacian.residual_error(x, b, h)
@@ -343,8 +343,8 @@ def restrict_residual(
                             param["C2"], param["C4"],
                             param["alphaB"],param["alphaM"],
                             param["H"],
-                            param["aexp"],
-                            param["M"] ) )
+                            param["aexp"]
+                             ) )
     else:
         return laplacian.restrict_residual(x, b, h)
         # return laplacian.restrict_residual_half(x, b, h)
@@ -415,7 +415,6 @@ def smoothing(
                             param["alphaB"],param["alphaM"],
                             param["H"],
                             param["aexp"],
-                            param["M"],
                             n_smoothing)
     
     else:
@@ -490,8 +489,8 @@ def operator(
                            param["C2"], param["C4"],
                            param["alphaB"],param["alphaM"],
                            param["H"],
-                           param["aexp"],
-                           param["M"])
+                           param["aexp"]
+                           )
     else:
         return laplacian.operator(x, h)
 
@@ -712,6 +711,7 @@ def F_cycle_FAS(
     #if param['aexp'] > 0.55:
         #print('Before:',x)
     smoothing(x, b, h, param["Npre"], param, rhs)
+    #print('Nans after smoothing 1:',np.isnan(x).sum()) # debug
     #if param['aexp'] > 0.55:
         #print('After: ',x)
     res_c = restrict_residual(x, b, h, param)
@@ -725,6 +725,7 @@ def F_cycle_FAS(
         smoothing(x_corr_c, b_c, two * h, param["Npre"], param, res_c)
     else:
         F_cycle_FAS(x_corr_c, b_c, param, nlevel + 1, res_c)
+    #print('Nans after smoothing 2:',np.isnan(x).sum()) # debug
     res_c = 0
     utils.add_vector_scalar_inplace(x_corr_c, x_c, np.float32(-1))
     if param["theory"].casefold() == "eft":
@@ -732,8 +733,9 @@ def F_cycle_FAS(
     else:
         mesh.add_prolongation_half(x, x_corr_c)
     x_corr_c = 0
+    #print('Nans after addition 1:',np.isnan(x).sum()) # debug
     smoothing(x, b, h, param["Npre"], param, rhs)
-
+    #print('Nans after smoothing 2:',np.isnan(x).sum()) # debug
     res_c = restrict_residual(x, b, h, param)
     x_c = mesh.restriction(x)
     x_corr_c = x_c.copy()
@@ -752,8 +754,10 @@ def F_cycle_FAS(
         mesh.add_prolongation(x, x_corr_c)
     else:
         mesh.add_prolongation_half(x, x_corr_c)
+    #print('Nans after prolongation:',np.isnan(x).sum()) # debug
     x_corr_c = 0
     smoothing(x, b, h, param["Npost"], param, rhs)
+    #print('Nans after smoothing 3:',np.isnan(x).sum()) # debug
     
 
 

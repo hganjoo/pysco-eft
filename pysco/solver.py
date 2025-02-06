@@ -145,6 +145,8 @@ def pm(
     param["compute_additional_field"] = True
     additional_field = get_additional_field(additional_field, density, h, param, tables)
     
+    
+    
 
     # TODO: Try to keep Phidot and initialise Phi_i = Phi_(i-1) + Phidot*dt
     param["compute_additional_field"] = False
@@ -205,7 +207,7 @@ def pm(
             -1.0
             * (c.value * 1e-3 * param["unit_t"] / (param["unit_l"] * param["aexp"]))
             ** 2)
-        prefac = (param["alphaB"] - param["alphaM"])
+        prefac = c2*(param["alphaB"] - param["alphaM"])
         force = mesh.derivative_eft(
             potential,
             additional_field,
@@ -289,8 +291,10 @@ def initialise_potential(
             param["compute_additional_field"]
             and "eft" == param["theory"].casefold()
         ):
-            potential = quadratic.initialise_potential(rhs,h,param["C2"],param["alphaB"],param["alphaM"],
-                                                       param["aexp"],param["M"])
+            potential = quadratic.initialise_potential(rhs,h,param["C2"],param["alphaB"],param["alphaM"]
+                                                       )
+            
+            
         
         else:
             minus_one_sixth_h2 = np.float32(-(h**2) / 6)
@@ -410,38 +414,28 @@ def get_additional_field(
             param["alphaM"] = eft_quantities[1]
             param["C2"] = eft_quantities[2]
             param["C4"] = eft_quantities[3]
-            param["H"] = eft_quantities[4]
-            param["M"] = eft_quantities[5]
-            print(eft_quantities)
-
-            #dens_term = utils.linear_operator(density, 1.0, -1.0)
-            f1 = param["unit_d"]
-            #f1 = 1.0
-            f2 = -f1
-            dens_term = utils.linear_operator(density, f1, f2)
-
-            # Debug
-
-            print('Mean chi: {}, dens: {:.4e}, stdev: {:.4e}'.format(additional_field.mean(),dens_term.mean(),dens_term.std()))
+            Eval = tables[2] 
+            param["H"] = Eval(np.log(param["aexp"])) / param["H0"]
+            print(eft_quantities,param['H'],param['parametrized_mu_z'])
             
-            try:
-                op = quadratic.solution_quadratic_equation(additional_field,dens_term[1,1,1],
-                                                       1,1,1,
-                                                       h,
-                                                       param['C2'],param['C4'],param['alphaB'],param['alphaM'],
-                                                       param['H'],param['aexp'],param['M'])
-                print('op111: {:.4e}'.format(op))
 
-            except:
-                pass
+            f1 = np.float32(
+            1.5 * param["aexp"] * param["Om_m"] * param["parametrized_mu_z"]
+            )   
+            f2 = -f1
+
+            dens_term = utils.linear_operator(density,f1,f2)
+            
+
+            
             additional_field = initialise_potential(
                 additional_field, dens_term, h, param,tables
             )
 
-            # Debug end
 
             chi = additional_field
             chi = multigrid.FAS(chi, dens_term, h, param)
+            #quadratic.smoothing(chi,dens_term,h,param['C2'],param['C4'],param['alphaB'],param['alphaM'],param['H'],param['aexp'],6)
             return chi
 
 

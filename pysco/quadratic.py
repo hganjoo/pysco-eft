@@ -4,6 +4,8 @@ based on the work by Cusin et al. (2017).
 
 The EFT model implemented here has two additional params (alphaB, alphaM). 
 
+The density term b has to be pre-processed into box units before inserting as args here. 
+
 Himanish Ganjoo - Nov 2024
 """
 
@@ -13,7 +15,7 @@ from numba import config, njit, prange
 import mesh
 
 @njit(
-    ["f4[:,:,::1](f4[:,:,::1], f4[:,:,::1], f4, f4, f4, f4, f4, f4, f4, f4)"],
+    ["f4[:,:,::1](f4[:,:,::1], f4[:,:,::1], f4, f4, f4, f4, f4, f4, f4)"],
     fastmath=True,
     cache=True,
     parallel=True,
@@ -27,8 +29,8 @@ def operator(
     alphaB: np.float32,
     alphaM: np.float32,
     H: np.float32,
-    a: np.float32,
-    M: np.float32) -> npt.NDArray[np.float32]:
+    a: np.float32
+    ) -> npt.NDArray[np.float32]:
     """Quadratic operator
 
     a pi^2 + b pi + c = 0 \\
@@ -45,11 +47,10 @@ def operator(
     C2, C4, alphaB, alphaM : np.float32
         EFT params
     H : np.float32
-        Hubble param
+        Dimensionless Dimensionless Hubble param E(a) E(a)
     a : np.float32
         scale factor
-    M : np.float32
-        time-dependent Planck mass
+    
         
     Returns
     -------
@@ -83,15 +84,15 @@ def operator(
                 
                 bv = lin - onebyfour*C4*nlin/(aH2)
 
-                lin = (
+                '''lin = (
                     2*onebyfour*(a**2*(-alphaB + alphaM )*b[i,j,k])/M**2 
                     + ((alphaB*(-alphaB + 2.*alphaM) - C2)*(pins))/h2
-                )
+                )'''
 
-                '''lin = (
+                lin = (
                     (alphaM - alphaB) * b[i,j,k]
                     + ((alphaB*(-alphaB + 2.*alphaM) - C2)*(pins))/h2
-                )'''
+                )
 
                 # Coeff of pi^0 in Q2[pi,pi]
                 q2offd = -onebyeight*((pi[i,-1 + j,-1 + k] - pi[i,-1 + j,1 + k] - pi[i,1 + j,-1 + k] + pi[i,1 + j,1 + k])**2 
@@ -109,7 +110,7 @@ def operator(
 
 
 @njit(
-        ["f4(f4[:,:,::1],f4,i4,i4,i4,f4,f4,f4,f4,f4,f4,f4,f4)"],
+        ["f4(f4[:,:,::1],f4,i4,i4,i4,f4,f4,f4,f4,f4,f4,f4)"],
         fastmath=True
 )
 def solution_quadratic_equation(
@@ -124,8 +125,8 @@ def solution_quadratic_equation(
     alphaB: np.float32,
     alphaM: np.float32,
     H: np.float32,
-    a: np.float32,
-    M: np.float32) -> np.float32:
+    a: np.float32
+    ) -> np.float32:
     
     """Solution of the quadratic equation governing the pi (chi) field \\
     for the EFT parameters. 
@@ -146,12 +147,10 @@ def solution_quadratic_equation(
     C2, C4, alphaB, alphaM : np.float32
         EFT params
     H : np.float32
-        Hubble param
+        Dimensionless Hubble param E(a)
     a : np.float32
         scale factor
-    M : np.float32
-        time-dependent Planck mass
-
+    
 
     Returns
     -------
@@ -178,15 +177,15 @@ def solution_quadratic_equation(
     
     bv = lin - onebyfour*C4*nlin/(aH2)
 
-    lin = (
+    '''lin = (
         2*onebyfour*(a**2*(-alphaB + alphaM )*b)/M**2 
         + ((alphaB*(-alphaB + two*alphaM) - C2)*(pins))/h2
-    )
+    )'''
 
-    '''lin = (
+    lin = (
                     (alphaM - alphaB) * b
                     + ((alphaB*(-alphaB + 2.*alphaM) - C2)*(pins))/h2
-                )'''
+                )
 
     # Coeff of pi^0 in Q2[pi,pi]
     q2offd = -onebyeight*((pi[x,-1 + y,-1 + z] - pi[x,-1 + y,1 + z] - pi[x,1 + y,-1 + z] + pi[x,1 + y,1 + z])**2 
@@ -197,10 +196,11 @@ def solution_quadratic_equation(
     cv = lin - onebyfour*C4*q2offd/(aH2)
 
     '''if bv*bv - 4*av*cv < 0:
-        print('Cvals:',av,bv,cv,bv**2 - 4*av*cv)
+        print('Cvals:',av,bv,cv,bv**2 - 4*av*cv)'''
     
-    if (x==1)&(y==1)&(z==1):
+    '''if (x==1)&(y==1)&(z==1):
         print('Dsc111:',bv**2 - 4*av*cv)'''
+    
     '''dterm = bv**2 - 4*av*cv
     if dterm>0:
         qsol =  (-bv - np.sqrt(dterm)) / (2*av)
@@ -215,7 +215,7 @@ def solution_quadratic_equation(
 
 
 @njit(
-    ["void(f4[:,:,::1], f4[:,:,::1], f4, f4, f4, f4, f4, f4, f4, f4)"],
+    ["void(f4[:,:,::1], f4[:,:,::1], f4, f4, f4, f4, f4, f4, f4)"],
     fastmath=True,
     cache=True
 )
@@ -229,7 +229,7 @@ def jacobi(
     alphaM: np.float32,
     H: np.float32,
     a: np.float32,
-    M: np.float32) -> None:
+    ) -> None:
     """Gauss-Seidel quadratic equation solver \\
     Solve the roots of u in the equation: \\
     a u^2 + bu + c = 0 \\
@@ -246,11 +246,9 @@ def jacobi(
     C2, C4, alphaB, alphaM : np.float32
         EFT params
     H : np.float32
-        Hubble param
+        Dimensionless Hubble param E(a)
     a : np.float32
         scale factor
-    M : np.float32
-        time-dependent Planck mass
     """
 
     ncells_1d = pi.shape[0]
@@ -259,7 +257,7 @@ def jacobi(
     for ix in range(-1,ncells_1d - 1):
             for iy in range(-1,ncells_1d - 1):
                 for iz in range(-1,ncells_1d - 1):
-                    pi[ix,iy,iz] = solution_quadratic_equation(pi_old,b[ix,iy,iz],ix,iy,iz,h,C2,C4,alphaB,alphaM,H,a,M)
+                    pi[ix,iy,iz] = solution_quadratic_equation(pi_old,b[ix,iy,iz],ix,iy,iz,h,C2,C4,alphaB,alphaM,H,a)
                     
 
 def smoothing(
@@ -272,7 +270,6 @@ def smoothing(
     alphaM: np.float32,
     H: np.float32,
     a: np.float32,
-    M: np.float32,
     n_smoothing: int) -> None:
     
     """Smooth Chi field with several Jacobi iterations
@@ -286,22 +283,20 @@ def smoothing(
     C2, C4, alphaB, alphaM : np.float32
         EFT params
     H : np.float32
-        Hubble param
+        Dimensionless Hubble param E(a)
     a : np.float32
         scale factor
-    M : np.float32
-        time-dependent Planck mass
     n_smoothing : int
         number of smoothing iterations
 
     """
     
     for _ in range(n_smoothing):
-        jacobi(pi, b, h, C2, C4, alphaB, alphaM, H, a, M)
+        jacobi(pi, b, h, C2, C4, alphaB, alphaM, H, a)
 
 
 @njit(
-    ["f4[:,:,::1](f4[:,:,::1], f4[:,:,::1], f4, f4, f4, f4, f4, f4, f4, f4)"],
+    ["f4[:,:,::1](f4[:,:,::1], f4[:,:,::1], f4, f4, f4, f4, f4, f4, f4)"],
     fastmath=True,
     cache=True,
     parallel=True,
@@ -315,8 +310,8 @@ def residual(
     alphaB: np.float32,
     alphaM: np.float32,
     H: np.float32,
-    a: np.float32,
-    M: np.float32) -> npt.NDArray[np.float32]:
+    a: np.float32
+    ) -> npt.NDArray[np.float32]:
 
     """Residual of Quadratic operator
 
@@ -334,7 +329,7 @@ def residual(
     C2, C4, alphaB, alphaM : np.float32
         EFT params
     H : np.float32
-        Hubble param
+        Dimensionless Hubble param E(a)
     a : np.float32
         scale factor
     M : np.float32
@@ -347,7 +342,7 @@ def residual(
 
     """
 
-    return -1*operator(pi,b,h,C2,C4,alphaB,alphaM,H,a,M)
+    return -1*operator(pi,b,h,C2,C4,alphaB,alphaM,H,a)
     """ ncells_1d = pi.shape[0]
     result = np.empty_like(pi)
     for i in prange(-1, ncells_1d - 1):
@@ -387,7 +382,7 @@ def residual(
 
 
 @njit(
-    ["f4(f4[:,:,::1], f4[:,:,::1], f4, f4, f4, f4, f4, f4, f4, f4)"],
+    ["f4(f4[:,:,::1], f4[:,:,::1], f4, f4, f4, f4, f4, f4, f4)"],
     fastmath=True,
     cache=True,
     parallel=True,
@@ -401,8 +396,8 @@ def residual_error(
     alphaB: np.float32,
     alphaM: np.float32,
     H: np.float32,
-    a: np.float32,
-    M: np.float32) -> np.float32:
+    a: np.float32
+    ) -> np.float32:
 
     """Error on half of the residual of the quadratic operator  \\
     residual = -(a pi^2 + b pi + c)  \\
@@ -419,7 +414,7 @@ def residual_error(
     C2, C4, alphaB, alphaM : np.float32
         EFT params
     H : np.float32
-        Hubble param
+        Dimensionless Hubble param E(a)
     a : np.float32
         scale factor
     M : np.float32
@@ -431,7 +426,7 @@ def residual_error(
 
     """
     ncells_1d = pi.shape[0]
-    res = operator(pi,b,h,C2,C4,alphaB,alphaM,H,a,M)
+    res = operator(pi,b,h,C2,C4,alphaB,alphaM,H,a)
     result = 0.0
 
     for i in prange(-1, ncells_1d - 1):
@@ -481,7 +476,7 @@ def residual_error(
  """
 
 @njit(
-    ["f4(f4[:,:,::1], f4[:,:,::1], f4, f4, f4, f4, f4, f4, f4, f4)"],
+    ["f4(f4[:,:,::1], f4[:,:,::1], f4, f4, f4, f4, f4, f4, f4)"],
     fastmath=True,
     cache=True,
     parallel=True,
@@ -495,8 +490,8 @@ def truncation_error(
     alphaB: np.float32,
     alphaM: np.float32,
     H: np.float32,
-    a: np.float32,
-    M: np.float32) -> np.float32:
+    a: np.float32
+    ) -> np.float32:
 
     """
     Truncation error estimator \\
@@ -515,11 +510,10 @@ def truncation_error(
     C2, C4, alphaB, alphaM : np.float32
         EFT params
     H : np.float32
-        Hubble param
+        Dimensionless Hubble param E(a)
     a : np.float32
         scale factor
-    M : np.float32
-        time-dependent Planck mass
+    
     
     Returns
     -------
@@ -529,8 +523,8 @@ def truncation_error(
     """
 
     ncells_1d = pi.shape[0] >> 1
-    RLx = mesh.restriction(operator(pi,b,h,C2,C4,alphaB,alphaM,H,a,M))
-    LRx = operator(mesh.restriction(pi), mesh.restriction(b), 2 * h ,C2,C4,alphaB,alphaM,H,a,M)
+    RLx = mesh.restriction(operator(pi,b,h,C2,C4,alphaB,alphaM,H,a))
+    LRx = operator(mesh.restriction(pi), mesh.restriction(b), 2 * h ,C2,C4,alphaB,alphaM,H,a)
     result = 0.0
     for i in prange(-1, ncells_1d - 1):
         for j in prange(-1, ncells_1d - 1):
@@ -541,7 +535,7 @@ def truncation_error(
 
 
 @njit(
-    ["f4[:,:,::1](f4[:,:,::1], f4, f4, f4, f4, f4, f4)"],
+    ["f4[:,:,::1](f4[:,:,::1], f4, f4, f4, f4)"],
     fastmath=True,
     cache=True,
     parallel=True,
@@ -551,9 +545,7 @@ def initialise_potential(
     h: np.float32,
     C2: np.float32,
     alphaB: np.float32,
-    alphaM: np.float32,
-    a: np.float32,
-    M: np.float32
+    alphaM: np.float32
 ) -> npt.NDArray[np.float32]:
     """
     HG: 14/11/2024
@@ -573,12 +565,7 @@ def initialise_potential(
         Grid size
     C2, alphaB0, alphaM0 : np.float32
         EFT params, basic and derived, taken from cosmotable
-    M: np.float32
-        Time-dependent Planck mass (taken from cosmotable)
-    a: np.float32
-        Scale factor
-    rhom: np.float32
-        matter density at current time
+    
 
     Returns
     -------
@@ -589,7 +576,7 @@ def initialise_potential(
     """
     xi = alphaB - alphaM
     nu = -C2 - alphaB*(xi - alphaM)
-    mu_chi = xi/nu
+    mu_chi = 1 + xi*xi/nu
     
     pi = np.empty_like(b)
     one_by_six = np.float32(1./6)
@@ -598,6 +585,8 @@ def initialise_potential(
         for j in prange(ncells_1d):
             for k in prange(ncells_1d):
                 pi[i, j, k] = - one_by_six*mu_chi*h*h*b[i,j,k]
+    #print('Init F:',pi)
+    
     return pi
 
 

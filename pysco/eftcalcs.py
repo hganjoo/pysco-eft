@@ -18,7 +18,7 @@ def geteft(
     alphaM0 = param["alphaM0"]
     a = param["aexp"]
     Eval = tables[2] 
-    E = Eval(a) / param["H0"]
+    E = Eval(np.log(a)) / param["H0"]
 
     om_m = param["Om_m"]
     om_ma = om_m / (om_m + (1-om_m)*a**3)
