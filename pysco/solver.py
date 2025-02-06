@@ -207,7 +207,7 @@ def pm(
             -1.0
             * (c.value * 1e-3 * param["unit_t"] / (param["unit_l"] * param["aexp"]))
             ** 2)
-        prefac = c2*(param["alphaB"] - param["alphaM"])
+        prefac = -1*(param["alphaB"] - param["alphaM"])
         force = mesh.derivative_eft(
             potential,
             additional_field,
