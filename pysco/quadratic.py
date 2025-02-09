@@ -170,10 +170,10 @@ def solution_quadratic_equation(
     
     pins = pi[-1 + x,y,z] + pi[x,-1 + y,z] + pi[x,y,-1 + z] + pi[x,y,1 + z] + pi[x,1 + y,z] + pi[1 + x,y,z]
     
-    av = (-six*C4)/(h4 * aH2)
+    av = (-six*C4)/(h4 * aH2) # goes to zero for linear
 
     lin = (alphaB*(six*alphaB - two*six*alphaM) + six*C2)/h2
-    nlin = -eight*pins/(h4)
+    nlin = -eight*pins/(h4) # goes to zero for linear
     
     bv = lin - onebyfour*C4*nlin/(aH2)
 
@@ -187,7 +187,7 @@ def solution_quadratic_equation(
                     + ((alphaB*(-alphaB + 2.*alphaM) - C2)*(pins))/h2
                 )
 
-    # Coeff of pi^0 in Q2[pi,pi]
+    # Coeff of pi^0 in Q2[pi,pi] goes to zero for linear
     q2offd = -onebyeight*((pi[x,-1 + y,-1 + z] - pi[x,-1 + y,1 + z] - pi[x,1 + y,-1 + z] + pi[x,1 + y,1 + z])**2 
     - 16.*((pi[x,y,-1 + z] + pi[x,y,1 + z])*(pi[x,-1 + y,z] + pi[x,1 + y,z]) + pi[-1 + x,y,z]*(pi[x,-1 + y,z] + pi[x,y,-1 + z] + pi[x,y,1 + z] + pi[x,1 + y,z]) + (pi[x,-1 + y,z] + pi[x,y,-1 + z] + pi[x,y,1 + z] + pi[x,1 + y,z])*pi[1 + x,y,z]) 
     + (pi[-1 + x,y,-1 + z] - pi[-1 + x,y,1 + z] - pi[1 + x,y,-1 + z] + pi[1 + x,y,1 + z])**2 
@@ -206,6 +206,9 @@ def solution_quadratic_equation(
         qsol =  (-bv - np.sqrt(dterm)) / (2*av)
     else:
         qsol = -0.5*bv/av'''
+    
+    if av == 0:
+        return -cv/bv
     
 
     dterm = bv**2 - 4*av*cv
