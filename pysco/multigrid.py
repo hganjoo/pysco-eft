@@ -602,7 +602,10 @@ def V_cycle_FAS(
     b_c = 0
     utils.add_vector_scalar_inplace(x_corr_c, x_c, np.float32(-1))
     x_c = 0
-    mesh.add_prolongation_half(x, x_corr_c)
+    if param["theory"].casefold() == "eft":
+        mesh.add_prolongation(x, x_corr_c)
+    else:
+        mesh.add_prolongation_half(x, x_corr_c)
     x_corr_c = 0
     smoothing(x, b, h, param["Npost"], param, rhs)
 
