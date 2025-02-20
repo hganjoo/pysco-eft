@@ -411,8 +411,7 @@ def get_additional_field(
             param["C4"] = eft_quantities[3]
             Eval = tables[2] 
             param["H"] = Eval(np.log(param["aexp"])) / param["H0"]
-            #print(eft_quantities,param['H'],param['parametrized_mu_z'])
-            #param['H'] = np.float32(1)
+            
             
 
             f1 = np.float32(
