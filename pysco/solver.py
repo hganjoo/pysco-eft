@@ -279,7 +279,7 @@ def initialise_potential(
                 )
         elif (
             param["compute_additional_field"]
-            and "eft" == param["theory"].casefold() and (not param["newton"]) #change
+            and "eft" == param["theory"].casefold() and (not param["eftlin"]) #change
         ):
             potential = quadratic.initialise_potential(rhs,h,param["C2"],param["alphaB"],param["alphaM"]
                                                        )
@@ -426,7 +426,7 @@ def get_additional_field(
 
              # newtonian recasting
 
-            if param['newton']:
+            if param['eftlin']:
 
                 lapfac = (param["alphaB"] - param["alphaM"]) / (2*param["alphaB"]*param["alphaM"] - param["alphaB"]**2 - param["C2"])
                 print('Chi Laplacian Factor:',lapfac)

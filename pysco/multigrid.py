@@ -276,7 +276,7 @@ def residual_error(
             )
     elif (
         param["compute_additional_field"]
-        and "eft" == param["theory"].casefold() and (not param["newton"]) #change
+        and "eft" == param["theory"].casefold() and (not param["eftlin"]) #change
     ):
         #print('EFT-reserr')
         return quadratic.residual_error(x, b, h,
@@ -346,7 +346,7 @@ def restrict_residual(
         
     elif (
         param["compute_additional_field"]
-        and "eft" == param["theory"].casefold() and (not param["newton"]) #change
+        and "eft" == param["theory"].casefold() and (not param["eftlin"]) #change
     ):
         if len(rhs)==0:
             return mesh.restriction(quadratic.residual(x, b, h, 
@@ -429,7 +429,7 @@ def smoothing(
             raise NotImplemented(
                 f"Only f(R) with n = 1 and 2, currently {param['fR_n']=}"
             )
-    elif param["compute_additional_field"] and "eft" == param["theory"].casefold() and (not param["newton"]): #change here
+    elif param["compute_additional_field"] and "eft" == param["theory"].casefold() and (not param["eftlin"]): #change here
         if len(rhs) == 0:
             #print('eft nonrhs')
             quadratic.smoothing(x, b, h, 
@@ -520,7 +520,7 @@ def operator(
                 f"Only f(R) with n = 1 and 2, currently {param['fR_n']=}"
             )
         
-    elif param["compute_additional_field"] and "eft" == param["theory"].casefold() and (not param["newton"]):
+    elif param["compute_additional_field"] and "eft" == param["theory"].casefold() and (not param["eftlin"]):
         
         return quadratic.operator(x, b, h,
                         param["C2"], param["C4"],
