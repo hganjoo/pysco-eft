@@ -77,17 +77,11 @@ def operator(
                 
                 pins = pi[-1 + i,j,k] + pi[i,-1 + j,k] + pi[i,j,-1 + k] + pi[i,j,1 + k] + pi[i,1 + j,k] + pi[1 + i,j,k]
                 
-                av = 0.
+                av = (-six*C4)/(h4 * aH2)
 
                 lin = (alphaB*(six*alphaB - two*six*alphaM) + six*C2)/h2
-                #nlin = -eight*pins/(h4)
-                
-                bv = lin
-
-                '''lin = (
-                    2*onebyfour*(a**2*(-alphaB + alphaM )*b[i,j,k])/M**2 
-                    + ((alphaB*(-alphaB + 2.*alphaM) - C2)*(pins))/h2
-                )'''
+                nlin = -eight*pins/(h4)
+                bv = lin - onebyfour*C4*nlin/(aH2)
 
                 lin = (
                     (alphaM - alphaB) * b[i,j,k]
@@ -95,15 +89,14 @@ def operator(
                 )
 
                 # Coeff of pi^0 in Q2[pi,pi]
-                '''q2offd = -onebyeight*((pi[i,-1 + j,-1 + k] - pi[i,-1 + j,1 + k] - pi[i,1 + j,-1 + k] + pi[i,1 + j,1 + k])**2 
+                q2offd = -onebyeight*((pi[i,-1 + j,-1 + k] - pi[i,-1 + j,1 + k] - pi[i,1 + j,-1 + k] + pi[i,1 + j,1 + k])**2 
                 - 16.*((pi[i,j,-1 + k] + pi[i,j,1 + k])*(pi[i,-1 + j,k] + pi[i,1 + j,k]) + pi[-1 + i,j,k]*(pi[i,-1 + j,k] + pi[i,j,-1 + k] + pi[i,j,1 + k] + pi[i,1 + j,k]) + (pi[i,-1 + j,k] + pi[i,j,-1 + k] + pi[i,j,1 + k] + pi[i,1 + j,k])*pi[1 + i,j,k]) 
                 + (pi[-1 + i,j,-1 + k] - pi[-1 + i,j,1 + k] - pi[1 + i,j,-1 + k] + pi[1 + i,j,1 + k])**2 
-                + (pi[-1 + i,-1 + j,k] - pi[-1 + i,1 + j,k] - pi[1 + i,-1 + j,k] + pi[1 + i,1 + j,k])**2)/(h4)'''
+                + (pi[-1 + i,-1 + j,k] - pi[-1 + i,1 + j,k] - pi[1 + i,-1 + j,k] + pi[1 + i,1 + j,k])**2)/(h4)
 
-                cv = lin 
+                cv = lin - onebyfour*C4*q2offd/(aH2)
 
-
-                result[i,j,k] = bv*pi[i,j,k] + cv
+                result[i,j,k] = av*pi[i,j,k]**2 + bv*pi[i,j,k] + cv
     
     return result
 
@@ -170,18 +163,11 @@ def solution_quadratic_equation(
     
     pins = pi[-1 + x,y,z] + pi[x,-1 + y,z] + pi[x,y,-1 + z] + pi[x,y,1 + z] + pi[x,1 + y,z] + pi[1 + x,y,z]
     
-    #av = (-six*C4)/(h4 * aH2) # goes to zero for linear
-    av = 0
-
-    lin = (alphaB*(six*alphaB - two*six*alphaM) + six*C2)/h2
-    #nlin = -eight*pins/(h4) # goes to zero for linear
+    av = (-six*C4)/(h4 * aH2) # goes to zero for linear
     
-    bv = lin
-
-    '''lin = (
-        2*onebyfour*(a**2*(-alphaB + alphaM )*b)/M**2 
-        + ((alphaB*(-alphaB + two*alphaM) - C2)*(pins))/h2
-    )'''
+    lin = (alphaB*(six*alphaB - two*six*alphaM) + six*C2)/h2
+    nlin = -eight*pins/(h4) # goes to zero for linear
+    bv = lin - onebyfour*C4*nlin/(aH2) 
 
     lin = (
                     (alphaM - alphaB) * b
@@ -189,27 +175,20 @@ def solution_quadratic_equation(
                 )
 
     # Coeff of pi^0 in Q2[pi,pi] goes to zero for linear
-    '''q2offd = -onebyeight*((pi[x,-1 + y,-1 + z] - pi[x,-1 + y,1 + z] - pi[x,1 + y,-1 + z] + pi[x,1 + y,1 + z])**2 
+    q2offd = -onebyeight*((pi[x,-1 + y,-1 + z] - pi[x,-1 + y,1 + z] - pi[x,1 + y,-1 + z] + pi[x,1 + y,1 + z])**2 
     - 16.*((pi[x,y,-1 + z] + pi[x,y,1 + z])*(pi[x,-1 + y,z] + pi[x,1 + y,z]) + pi[-1 + x,y,z]*(pi[x,-1 + y,z] + pi[x,y,-1 + z] + pi[x,y,1 + z] + pi[x,1 + y,z]) + (pi[x,-1 + y,z] + pi[x,y,-1 + z] + pi[x,y,1 + z] + pi[x,1 + y,z])*pi[1 + x,y,z]) 
     + (pi[-1 + x,y,-1 + z] - pi[-1 + x,y,1 + z] - pi[1 + x,y,-1 + z] + pi[1 + x,y,1 + z])**2 
-    + (pi[-1 + x,-1 + y,z] - pi[-1 + x,1 + y,z] - pi[1 + x,-1 + y,z] + pi[1 + x,1 + y,z])**2)/(h4)'''
+    + (pi[-1 + x,-1 + y,z] - pi[-1 + x,1 + y,z] - pi[1 + x,-1 + y,z] + pi[1 + x,1 + y,z])**2)/(h4)
 
-    cv = lin
+    cv = lin - onebyfour*C4*q2offd/(aH2)
 
-    '''if bv*bv - 4*av*cv < 0:
-        print('Cvals:',av,bv,cv,bv**2 - 4*av*cv)'''
-    
-    '''if (x==1)&(y==1)&(z==1):
-        print('Dsc111:',bv**2 - 4*av*cv)'''
-    
-    '''dterm = bv**2 - 4*av*cv
+    dterm = bv**2 - 4*av*cv
     if dterm>0:
         qsol =  (-bv - np.sqrt(dterm)) / (2*av)
     else:
-        qsol = -0.5*bv/av'''
+        qsol = -1*cv/bv
     
-   
-    return -1.*cv/bv
+    return qsol
 
 
 @njit(
@@ -276,18 +255,15 @@ def solution_quadratic_equation_with_rhs(
     
     pins = pi[-1 + x,y,z] + pi[x,-1 + y,z] + pi[x,y,-1 + z] + pi[x,y,1 + z] + pi[x,1 + y,z] + pi[1 + x,y,z]
     
-    #av = (-six*C4)/(h4 * aH2) # goes to zero for linear
-    av = 0
+    av = (-six*C4)/(h4 * aH2) # goes to zero for linear
+    
 
     lin = (alphaB*(six*alphaB - two*six*alphaM) + six*C2)/h2
-    #nlin = -eight*pins/(h4) # goes to zero for linear
+    nlin = -eight*pins/(h4) # goes to zero for linear
     
     bv = lin
 
-    '''lin = (
-        2*onebyfour*(a**2*(-alphaB + alphaM )*b)/M**2 
-        + ((alphaB*(-alphaB + two*alphaM) - C2)*(pins))/h2
-    )'''
+    bv = lin - onebyfour*C4*nlin/(aH2) 
 
     lin = (
                     (alphaM - alphaB) * b
@@ -295,15 +271,21 @@ def solution_quadratic_equation_with_rhs(
                 )
 
     # Coeff of pi^0 in Q2[pi,pi] goes to zero for linear
-    '''q2offd = -onebyeight*((pi[x,-1 + y,-1 + z] - pi[x,-1 + y,1 + z] - pi[x,1 + y,-1 + z] + pi[x,1 + y,1 + z])**2 
+    q2offd = -onebyeight*((pi[x,-1 + y,-1 + z] - pi[x,-1 + y,1 + z] - pi[x,1 + y,-1 + z] + pi[x,1 + y,1 + z])**2 
     - 16.*((pi[x,y,-1 + z] + pi[x,y,1 + z])*(pi[x,-1 + y,z] + pi[x,1 + y,z]) + pi[-1 + x,y,z]*(pi[x,-1 + y,z] + pi[x,y,-1 + z] + pi[x,y,1 + z] + pi[x,1 + y,z]) + (pi[x,-1 + y,z] + pi[x,y,-1 + z] + pi[x,y,1 + z] + pi[x,1 + y,z])*pi[1 + x,y,z]) 
     + (pi[-1 + x,y,-1 + z] - pi[-1 + x,y,1 + z] - pi[1 + x,y,-1 + z] + pi[1 + x,y,1 + z])**2 
-    + (pi[-1 + x,-1 + y,z] - pi[-1 + x,1 + y,z] - pi[1 + x,-1 + y,z] + pi[1 + x,1 + y,z])**2)/(h4)'''
+    + (pi[-1 + x,-1 + y,z] - pi[-1 + x,1 + y,z] - pi[1 + x,-1 + y,z] + pi[1 + x,1 + y,z])**2)/(h4)
 
-    cv = lin - rhs
+    cv = lin - onebyfour*C4*q2offd/(aH2) - rhs
 
-   
-    return -1.*cv/bv
+    dterm = bv**2 - 4*av*cv
+    if dterm>0:
+        qsol =  (-bv - np.sqrt(dterm)) / (2*av)
+    else:
+        qsol = -1*cv/bv
+    
+    return qsol
+
 
 
 
@@ -348,7 +330,7 @@ def jacobi(
     """
 
     ncells_1d = pi.shape[0]
-    pi_old = np.copy(pi) # debug?
+    
 
     for ix in range(-1,ncells_1d - 1):
             for iy in range(-1,ncells_1d - 1):
@@ -397,7 +379,7 @@ def jacobi_with_rhs(
     """
 
     ncells_1d = pi.shape[0]
-    pi_old = np.copy(pi) # debug?
+    
 
     for ix in range(-1,ncells_1d - 1):
             for iy in range(-1,ncells_1d - 1):
