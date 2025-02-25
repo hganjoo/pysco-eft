@@ -439,7 +439,7 @@ def smoothing(
                                 param["aexp"],
                                 n_smoothing)
         else:
-            print('Smoothing RHS EFT')
+            #print('Smoothing RHS EFT')
             quadratic.smoothing_with_rhs(x, b, h, 
                                 param["C2"], param["C4"],
                                 param["alphaB"],param["alphaM"],

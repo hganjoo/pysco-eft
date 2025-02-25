@@ -445,6 +445,7 @@ def get_additional_field(
             else:
 
                 print('Full solver.')
+                print(param[['alphaB','alphaM','C2','C4','parametrized_mu_z']])
 
                 dens_term = utils.linear_operator(density,f1,f2)
                 additional_field = initialise_potential(

@@ -32,7 +32,6 @@ def geteft(
 
     mpc_to_km = 1e3 * pc.value  #   Mpc -> km
     g = G.value * 1e-9  # m3/kg/s2 -> km3/kg/s2
-    #g = G.value
 
     H = param["H0"] / mpc_to_km # H to SI
     H = H * param["unit_t"] # From SI to BU

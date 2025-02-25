@@ -66,7 +66,7 @@ def operator(
 
                 h2 = h**2
                 h4 = h2**2
-                aH2 = (a*H)**2
+                aH2 = (a*a*H)**2
                 
                 onebyfour = np.float32(0.25)
                 onebyeight = np.float32(0.125)
@@ -96,7 +96,11 @@ def operator(
 
                 cv = lin - onebyfour*C4*q2offd/(aH2)
 
+                
                 result[i,j,k] = av*pi[i,j,k]**2 + bv*pi[i,j,k] + cv
+                
+
+                
     
     return result
 
@@ -153,7 +157,7 @@ def solution_quadratic_equation(
 
     h2 = h**2
     h4 = h2**2
-    aH2 = (a*H)**2
+    aH2 = (a*a*H)**2
     onebyfour = np.float32(0.25)
     onebyeight = np.float32(0.125)
     six = np.float32(6)
@@ -183,10 +187,14 @@ def solution_quadratic_equation(
     cv = lin - onebyfour*C4*q2offd/(aH2)
 
     dterm = bv**2 - 4*av*cv
-    if dterm>0:
+    #print(dterm)
+    '''if dterm>0:
         qsol =  (-bv - np.sqrt(dterm)) / (2*av)
     else:
-        qsol = -1*cv/bv
+        #print('dt neg.')
+        qsol = -bv/(2*av)'''
+    
+    qsol =  (-bv - np.sqrt(dterm)) / (2*av)
     
     return qsol
 
@@ -245,7 +253,7 @@ def solution_quadratic_equation_with_rhs(
 
     h2 = h**2
     h4 = h2**2
-    aH2 = (a*H)**2
+    aH2 = (a*a*H)**2
     onebyfour = np.float32(0.25)
     onebyeight = np.float32(0.125)
     six = np.float32(6)
@@ -279,10 +287,13 @@ def solution_quadratic_equation_with_rhs(
     cv = lin - onebyfour*C4*q2offd/(aH2) - rhs
 
     dterm = bv**2 - 4*av*cv
-    if dterm>0:
+    
+    '''if dterm>0:
         qsol =  (-bv - np.sqrt(dterm)) / (2*av)
     else:
-        qsol = -1*cv/bv
+        qsol = -bv/(2*av)'''
+    
+    qsol =  (-bv - np.sqrt(dterm)) / (2*av)
     
     return qsol
 
