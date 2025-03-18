@@ -26,3 +26,8 @@ pysco/test-small-modp.ipynb
 /pysco/lin
 /pysco/nlin
 /pysco/nlint
+*.txt
+/pysco/comp12
+/pysco/comp06
+/pysco/comp24
+/pysco/comp48

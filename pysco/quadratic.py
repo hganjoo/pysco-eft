@@ -76,9 +76,10 @@ def operator(
 
                 
                 pins = pi[-1 + i,j,k] + pi[i,-1 + j,k] + pi[i,j,-1 + k] + pi[i,j,1 + k] + pi[i,1 + j,k] + pi[1 + i,j,k]
+                #pins = 0.
                 
                 av = (-six*C4)/(h4 * aH2)
-
+                
                 lin = (alphaB*(six*alphaB - two*six*alphaM) + six*C2)/h2
                 nlin = -eight*pins/(h4)
                 bv = lin - onebyfour*C4*nlin/(aH2)
@@ -93,6 +94,7 @@ def operator(
                 - 16.*((pi[i,j,-1 + k] + pi[i,j,1 + k])*(pi[i,-1 + j,k] + pi[i,1 + j,k]) + pi[-1 + i,j,k]*(pi[i,-1 + j,k] + pi[i,j,-1 + k] + pi[i,j,1 + k] + pi[i,1 + j,k]) + (pi[i,-1 + j,k] + pi[i,j,-1 + k] + pi[i,j,1 + k] + pi[i,1 + j,k])*pi[1 + i,j,k]) 
                 + (pi[-1 + i,j,-1 + k] - pi[-1 + i,j,1 + k] - pi[1 + i,j,-1 + k] + pi[1 + i,j,1 + k])**2 
                 + (pi[-1 + i,-1 + j,k] - pi[-1 + i,1 + j,k] - pi[1 + i,-1 + j,k] + pi[1 + i,1 + j,k])**2)/(h4)
+
 
                 cv = lin - onebyfour*C4*q2offd/(aH2)
 
@@ -166,12 +168,16 @@ def solution_quadratic_equation(
 
     
     pins = pi[-1 + x,y,z] + pi[x,-1 + y,z] + pi[x,y,-1 + z] + pi[x,y,1 + z] + pi[x,1 + y,z] + pi[1 + x,y,z]
+    #pins = 0
     
     av = (-six*C4)/(h4 * aH2) # goes to zero for linear
+    av = av
     
-    lin = (alphaB*(six*alphaB - two*six*alphaM) + six*C2)/h2
-    nlin = -eight*pins/(h4) # goes to zero for linear
-    bv = lin - onebyfour*C4*nlin/(aH2) 
+    
+    blin = (alphaB*(six*alphaB - two*six*alphaM) + six*C2)/h2
+    bnlin = -eight*pins/(h4) # goes to zero for linear
+    
+    bv = blin - onebyfour*C4*bnlin/(aH2) 
 
     lin = (
                     (alphaM - alphaB) * b
@@ -184,17 +190,21 @@ def solution_quadratic_equation(
     + (pi[-1 + x,y,-1 + z] - pi[-1 + x,y,1 + z] - pi[1 + x,y,-1 + z] + pi[1 + x,y,1 + z])**2 
     + (pi[-1 + x,-1 + y,z] - pi[-1 + x,1 + y,z] - pi[1 + x,-1 + y,z] + pi[1 + x,1 + y,z])**2)/(h4)
 
+
     cv = lin - onebyfour*C4*q2offd/(aH2)
 
     dterm = bv**2 - 4*av*cv
-    #print(dterm)
-    '''if dterm>0:
+    
+    if dterm>0:
         qsol =  (-bv - np.sqrt(dterm)) / (2*av)
     else:
+        #print('warn-discriminant-norhs')
         #print('dt neg.')
-        qsol = -bv/(2*av)'''
+        #print('D:',dterm,b,av,bv,cv,4*av*cv,bv**2,x,y,z)
+        #qsol = -bv/(2*av)
+        qsol = -0.5*bv/av
     
-    qsol =  (-bv - np.sqrt(dterm)) / (2*av)
+    #qsol =  (-bv - np.sqrt(dterm)) / (2*av)
     
     return qsol
 
@@ -262,16 +272,17 @@ def solution_quadratic_equation_with_rhs(
 
     
     pins = pi[-1 + x,y,z] + pi[x,-1 + y,z] + pi[x,y,-1 + z] + pi[x,y,1 + z] + pi[x,1 + y,z] + pi[1 + x,y,z]
+    #pins = 0.
     
     av = (-six*C4)/(h4 * aH2) # goes to zero for linear
+    av = av
+    
     
 
-    lin = (alphaB*(six*alphaB - two*six*alphaM) + six*C2)/h2
-    nlin = -eight*pins/(h4) # goes to zero for linear
+    blin = (alphaB*(six*alphaB - two*six*alphaM) + six*C2)/h2
+    bnlin = -eight*pins/(h4) # goes to zero for linear
     
-    bv = lin
-
-    bv = lin - onebyfour*C4*nlin/(aH2) 
+    bv = blin - onebyfour*C4*bnlin/(aH2) 
 
     lin = (
                     (alphaM - alphaB) * b
@@ -284,16 +295,19 @@ def solution_quadratic_equation_with_rhs(
     + (pi[-1 + x,y,-1 + z] - pi[-1 + x,y,1 + z] - pi[1 + x,y,-1 + z] + pi[1 + x,y,1 + z])**2 
     + (pi[-1 + x,-1 + y,z] - pi[-1 + x,1 + y,z] - pi[1 + x,-1 + y,z] + pi[1 + x,1 + y,z])**2)/(h4)
 
+
     cv = lin - onebyfour*C4*q2offd/(aH2) - rhs
 
     dterm = bv**2 - 4*av*cv
     
-    '''if dterm>0:
+    if dterm>0:
         qsol =  (-bv - np.sqrt(dterm)) / (2*av)
     else:
-        qsol = -bv/(2*av)'''
+        #qsol = -bv/(2*av)
+        
+        qsol = -0.5*bv/av
     
-    qsol =  (-bv - np.sqrt(dterm)) / (2*av)
+    #qsol =  (-bv - np.sqrt(dterm)) / (2*av)
     
     return qsol
 
@@ -341,12 +355,13 @@ def jacobi(
     """
 
     ncells_1d = pi.shape[0]
+    pi_old = np.copy(pi)
     
 
     for ix in range(-1,ncells_1d - 1):
             for iy in range(-1,ncells_1d - 1):
                 for iz in range(-1,ncells_1d - 1):
-                    pi[ix,iy,iz] = solution_quadratic_equation(pi,b[ix,iy,iz],ix,iy,iz,h,C2,C4,alphaB,alphaM,H,a)
+                    pi[ix,iy,iz] = solution_quadratic_equation(pi_old,b[ix,iy,iz],ix,iy,iz,h,C2,C4,alphaB,alphaM,H,a)
 
 
 @njit(
@@ -668,43 +683,7 @@ def residual(
     """
 
     return -1*operator(pi,b,h,C2,C4,alphaB,alphaM,H,a)
-    """ ncells_1d = pi.shape[0]
-    result = np.empty_like(pi)
-    for i in prange(-1, ncells_1d - 1):
-        for j in prange(-1, ncells_1d - 1):
-            for k in prange(-1, ncells_1d - 1):
-
-                h2 = h**2
-                h4 = h2**2
-                aH2 = (a*H)**2
-                
-                pins = pi[-1 + i,j,k] + pi[i,-1 + j,k] + pi[i,j,-1 + k] + pi[i,j,1 + k] + pi[i,1 + j,k] + pi[1 + i,j,k]
-                
-                av = (-6.*C4)/(h4 * aH2)
-
-                lin = (alphaB*(6.*alphaB - 12.*alphaM) + 6.*C2)/h2
-                nlin = -8*pins/(h4)
-                
-                bv = lin - 0.25*C4*nlin/(aH2)
-
-                lin = (
-                    (a**2*(-0.5*alphaB + 0.5*alphaM )*b[i,j,k])/M**2 
-                    + ((alphaB*(-alphaB + 2.*alphaM) - C2)*(pins))/h2
-                )
-
-                # Coeff of pi^0 in Q2[pi,pi]
-                q2offd = -0.125*((pi[i,-1 + j,-1 + k] - pi[i,-1 + j,1 + k] - pi[i,1 + j,-1 + k] + pi[i,1 + j,1 + k])**2 
-                - 16.*((pi[i,j,-1 + k] + pi[i,j,1 + k])*(pi[i,-1 + j,k] + pi[i,1 + j,k]) + pi[-1 + i,j,k]*(pi[i,-1 + j,k] + pi[i,j,-1 + k] + pi[i,j,1 + k] + pi[i,1 + j,k]) + (pi[i,-1 + j,k] + pi[i,j,-1 + k] + pi[i,j,1 + k] + pi[i,1 + j,k])*pi[1 + i,j,k]) 
-                + (pi[-1 + i,j,-1 + k] - pi[-1 + i,j,1 + k] - pi[1 + i,j,-1 + k] + pi[1 + i,j,1 + k])**2 
-                + (pi[-1 + i,-1 + j,k] - pi[-1 + i,1 + j,k] - pi[1 + i,-1 + j,k] + pi[1 + i,1 + j,k])**2)/(h4)
-
-                cv = lin - 0.25*C4*q2offd/(aH2)
-
-                result[i,j,k] = -(av*pi[i,j,k]**2 + bv*pi[i,j,k] + cv)
     
-    return result
- """
-
 
 @njit(
     ["f4(f4[:,:,::1], f4[:,:,::1], f4, f4, f4, f4, f4, f4, f4)"],
@@ -763,42 +742,7 @@ def residual_error(
     
 
 
-    """ ncells_1d = pi.shape[0]
-    result = 0.0
-    for i in prange(-1, ncells_1d - 1):
-        for j in prange(-1, ncells_1d - 1):
-            for k in prange(-1, ncells_1d - 1):
-
-                h2 = h**2
-                h4 = h2**2
-                aH2 = (a*H)**2
-                
-                pins = pi[-1 + i,j,k] + pi[i,-1 + j,k] + pi[i,j,-1 + k] + pi[i,j,1 + k] + pi[i,1 + j,k] + pi[1 + i,j,k]
-                
-                av = (-6.*C4)/(h4 * aH2)
-
-                lin = (alphaB*(6.*alphaB - 12.*alphaM) + 6.*C2)/h2
-                nlin = -8*pins/(h4)
-                
-                bv = lin - 0.25*C4*nlin/(aH2)
-
-                lin = (
-                    (a**2*(-0.5*alphaB + 0.5*alphaM )*b[i,j,k])/M**2 
-                    + ((alphaB*(-alphaB + 2.*alphaM) - C2)*(pins))/h2
-                )
-
-                # Coeff of pi^0 in Q2[pi,pi]
-                q2offd = -0.125*((pi[i,-1 + j,-1 + k] - pi[i,-1 + j,1 + k] - pi[i,1 + j,-1 + k] + pi[i,1 + j,1 + k])**2 
-                - 16.*((pi[i,j,-1 + k] + pi[i,j,1 + k])*(pi[i,-1 + j,k] + pi[i,1 + j,k]) + pi[-1 + i,j,k]*(pi[i,-1 + j,k] + pi[i,j,-1 + k] + pi[i,j,1 + k] + pi[i,1 + j,k]) + (pi[i,-1 + j,k] + pi[i,j,-1 + k] + pi[i,j,1 + k] + pi[i,1 + j,k])*pi[1 + i,j,k]) 
-                + (pi[-1 + i,j,-1 + k] - pi[-1 + i,j,1 + k] - pi[1 + i,j,-1 + k] + pi[1 + i,j,1 + k])**2 
-                + (pi[-1 + i,-1 + j,k] - pi[-1 + i,1 + j,k] - pi[1 + i,-1 + j,k] + pi[1 + i,1 + j,k])**2)/(h4)
-
-                cv = lin - 0.25*C4*q2offd/(aH2)
-
-                result += (av*pi[i,j,k]**2 + bv*pi[i,j,k] + cv)**2
     
-    return np.sqrt(result)
- """
 
 @njit(
     ["f4(f4[:,:,::1], f4[:,:,::1], f4, f4, f4, f4, f4, f4, f4)"],
@@ -904,9 +848,9 @@ def initialise_potential(
     pi = np.empty_like(b)
     one_by_six = np.float32(1./6)
     ncells_1d = b.shape[0]
-    for i in prange(ncells_1d):
-        for j in prange(ncells_1d):
-            for k in prange(ncells_1d):
+    for i in prange(-1,ncells_1d-1):
+        for j in prange(-1,ncells_1d-1):
+            for k in prange(-1,ncells_1d-1):
                 pi[i, j, k] = - one_by_six*lfac*h*h*b[i,j,k]
     #print('Init F:',pi)
     

@@ -145,7 +145,7 @@ def FAS(
     logging.info("Start Full-Approximation Storage Multigrid")
     
     for _ in range(1):
-        F_cycle_FAS(x, b, param)
+        V_cycle_FAS(x, b, param)
         #print('xval:',x[0,0,0])
         residual_error_tmp = residual_error(x, b, h, param)
         print('reserr-FAS:',residual_error_tmp)
@@ -361,7 +361,7 @@ def restrict_residual(
                             param["alphaB"],param["alphaM"],
                             param["H"],
                             param["aexp"]
-                             ) )
+                             ) ) #do rhs + residual here
     else:
         if len(rhs) == 0:
             return laplacian.restrict_residual(x, b, h)
@@ -446,7 +446,7 @@ def smoothing(
                                 param["H"],
                                 param["aexp"],
                                 n_smoothing,
-                                rhs)
+                                rhs) #do change to rhs here
             
     
     else:
@@ -522,12 +522,14 @@ def operator(
         
     elif param["compute_additional_field"] and "eft" == param["theory"].casefold() and (not param["eftlin"]):
         
+        
         return quadratic.operator(x, b, h,
                         param["C2"], param["C4"],
                         param["alphaB"],param["alphaM"],
                         param["H"],
                         param["aexp"]
                         )
+        
         
     else:
         return laplacian.operator(x, h)

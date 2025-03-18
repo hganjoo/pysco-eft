@@ -416,6 +416,8 @@ def get_additional_field(
             param["C4"] = eft_quantities[3]
             Eval = tables[2] 
             param["H"] = Eval(np.log(param["aexp"])) / param["H0"]
+            param["xi"] = param["alphaB"] - param["alphaM"]
+            param["nu"] = -param["C2"] - param["alphaB"]*(param["xi"] - param["alphaM"])
             
             
 
@@ -444,8 +446,8 @@ def get_additional_field(
             
             else:
 
-                print('Full solver.')
-                print(param[['alphaB','alphaM','C2','C4','parametrized_mu_z']])
+                #print('Full solver.')
+                #print(param[['alphaB','alphaM','C2','C4','xi','nu']])
 
                 dens_term = utils.linear_operator(density,f1,f2)
                 additional_field = initialise_potential(
