@@ -21,15 +21,14 @@ def geteft(
     E = Eval(np.log(a)) / param["H0"]
 
     om_m = param["Om_m"]
-    #om_ma = om_m / (om_m + (1-om_m)*a**3)
-    om_ma = om_m / (a**3*E**2)
+    om_ma = om_m / (om_m + (1-om_m)*a**3)
     alphaB = alphaB0*(1-om_ma) / (1-om_m)
     alphaM = alphaM0*(1-om_ma) / (1-om_m)
     HdotbyH2 = -1.5*om_ma
     Ia = np.power(om_ma,param["alphaM0"]/(3 * (1 - om_m)))
     #Ia = 1.
 
-    C2 = -alphaM + alphaB*(1 + alphaM) + (1 + alphaB)*HdotbyH2 + (3*a**3*alphaB0*om_m)/(E**2*a**3)**2 + a**(-3.)*1.5*Ia*om_m/(E**2)
+    C2 = -alphaM + alphaB*(1 + alphaM) + (1 + alphaB)*HdotbyH2 + (3*a**3*alphaB0*om_m)/(a**3*(1 - om_m) + om_m)**2 + a**(-3.)*1.5*Ia*om_m/(E**2)
     #C2 = -alphaM + alphaB*(1 + alphaM) + (1 + alphaB)*HdotbyH2 + a**(-3.)*1.5*Ia*om_m/(E**2)
     C4 = -4*alphaB + 2*alphaM
 
