@@ -570,9 +570,9 @@ def get_transfer_grid(param: pd.Series) -> npt.NDArray[np.float32]:
     )
     k_1d = 0
     transfer_grid = np.interp(k_grid, k_dimensionless, sqrtPk)
-    """ transfer_grid = 10 ** np.interp(
+    '''transfer_grid = 10 ** np.interp(
         np.log10(k_grid), np.log10(k_dimensionless), np.log10(sqrtPk)
-    ) """
+    ) '''
     return transfer_grid
 
 

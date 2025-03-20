@@ -112,7 +112,9 @@ def pm(
     elif THEORY == "eft":
         av = param["aexp"]
         omm = param["Om_m"]
-        oma = omm / (omm + (1 - omm)*av**3)
+        Eval = tables[2] 
+        E = Eval(np.log(param["aexp"])) / param["H0"]
+        oma = omm / (E**2*av**3)
         param["parametrized_mu_z"] = np.power(oma,param["alphaM0"]/(3 * (1 - omm)))
     else:
         param["parametrized_mu_z"] = np.float32(1)
