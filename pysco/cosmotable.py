@@ -60,6 +60,17 @@ def generate(param: pd.Series) -> List[interp1d]:
     a_start = 1.0 / (1 + z_start)
     lna = np.linspace(np.log(a_start), 0, 100_000)
     a = np.exp(lna)
+    fac = np.ones_like(lna)
+    if param["theory"].casefold() == 'eft':
+        # alphaM table
+        evt = a ** (
+                -3 * (1 + param["w0"] + param["wa"])
+            ) * np.exp(-3 * param["wa"] * (1 - a))
+        den = param["Om_m"] * a ** (-3) + param["Om_lambda"] * evt
+        oma = param['Om_m'] / (den*a**3)
+        ams = param['alphaM0']*(1 - oma) / (1 - param['Om_m'])
+        fac = np.exp(-1*cumulative_trapezoid(y = ams/a,x=a,initial=0))
+    
     dlna = lna[1] - lna[0]
     E_array = cosmo.efunc(1.0 / a - 1)
     dt_supercomoving = dlna / (a**2 * E_array)
@@ -107,6 +118,7 @@ def generate(param: pd.Series) -> List[interp1d]:
         interp1d(lnaexp_growth, f3b, fill_value="extrapolate"),
         interp1d(lnaexp_growth, d3c, fill_value="extrapolate"),
         interp1d(lnaexp_growth, f3c, fill_value="extrapolate"),
+        interp1d(lna,fac,fill_value="extrapolate")
     ]
 
 

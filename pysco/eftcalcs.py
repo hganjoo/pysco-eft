@@ -19,28 +19,27 @@ def geteft(
     a = param["aexp"]
     Eval = tables[2] 
     E = Eval(np.log(a)) / param["H0"]
-
     om_m = param["Om_m"]
-    om_ma = om_m / (om_m + (1-om_m)*a**3)
+
+    evt = a ** (
+            -3 * (1 + param["w0"] + param["wa"])
+        ) * np.exp(-3 * param["wa"] * (1 - a))
+
+    om_ma = param['Om_m'] / (param["Om_m"] + param["Om_lambda"] * evt * a ** 3)
     alphaB = alphaB0*(1-om_ma) / (1-om_m)
     alphaM = alphaM0*(1-om_ma) / (1-om_m)
     HdotbyH2 = -1.5*om_ma
-    Ia = np.power(om_ma,param["alphaM0"]/(3 * (1 - om_m)))
-    #Ia = 1.
+    #Ia = np.power(om_ma,param["alphaM0"]/(3 * (1 - om_m)))
+    Ia = tables[13](np.log(a))
 
-    C2 = -alphaM + alphaB*(1 + alphaM) + (1 + alphaB)*HdotbyH2 + (3*a**3*alphaB0*om_m)/(a**3*(1 - om_m) + om_m)**2 + a**(-3.)*1.5*Ia*om_m/(E**2)
-    #C2 = -alphaM + alphaB*(1 + alphaM) + (1 + alphaB)*HdotbyH2 + a**(-3.)*1.5*Ia*om_m/(E**2)
+    et1 = a**( -3*(param["w0"] + param["wa"] ) ) * np.exp(3*param["wa"] * (1-a))
+    abdot = om_m * ( 3*et1*param["Om_lambda"]*param["wa"] - 3*et1*param["Om_lambda"]*(param["wa"] + param["w0"])/a)
+    abdot = abdot / (et1*param["Om_lambda"] + om_m)**2
+    abdot = abdot / (1 - om_m)
+    abdot = abdot * alphaB0 * a
+    #C2 = -alphaM + alphaB*(1 + alphaM) + (1 + alphaB)*HdotbyH2 + (3*a**3*alphaB0*om_m)/(a**3*(1 - om_m) + om_m)**2 + a**(-3.)*1.5*Ia*om_m/(E**2)
+    C2 = -alphaM + alphaB*(1 + alphaM) + (1 + alphaB)*HdotbyH2 + abdot + a**(-3.)*1.5*Ia*om_m/(E**2)
     C4 = -4*alphaB + 2*alphaM
 
-    mpc_to_km = 1e3 * pc.value  #   Mpc -> km
-    g = G.value * 1e-9  # m3/kg/s2 -> km3/kg/s2
-
-    H = param["H0"] / mpc_to_km # H to SI
-    H = H * param["unit_t"] # From SI to BU
-    H = H*E
-
-    g = g * param["unit_d"] * param["unit_t"]**2 # g from SI to BU
-    M = 1./np.sqrt(8*Ia*np.pi*g) # g is modified 
-
-    return [alphaB,alphaM,C2,C4,H,M]
+    return [alphaB,alphaM,C2,C4]
 

@@ -110,10 +110,7 @@ def pm(
             1 + param["parametrized_mu0"] * omega_lambda_z / param["Om_lambda"]
         )   
     elif THEORY == "eft":
-        av = param["aexp"]
-        omm = param["Om_m"]
-        oma = omm / (omm + (1 - omm)*av**3)
-        param["parametrized_mu_z"] = np.power(oma,param["alphaM0"]/(3 * (1 - omm)))
+        param["parametrized_mu_z"] = tables[13](np.log(param['aexp']))
     else:
         param["parametrized_mu_z"] = np.float32(1)
 
@@ -416,21 +413,13 @@ def get_additional_field(
             param["C4"] = eft_quantities[3]
             Eval = tables[2] 
             param["H"] = Eval(np.log(param["aexp"])) / param["H0"]
-            param["xi"] = param["alphaB"] - param["alphaM"]
-            param["nu"] = -param["C2"] - param["alphaB"]*(param["xi"] - param["alphaM"])
+            #param["xi"] = param["alphaB"] - param["alphaM"]
+            #param["nu"] = -param["C2"] - param["alphaB"]*(param["xi"] - param["alphaM"])
             
-            
-
             f1 = np.float32(
             1.5 * param["aexp"] * param["Om_m"] * param["parametrized_mu_z"]
             )   
             f2 = -f1
-
-            
-
-            chi = additional_field
-
-             # newtonian recasting
 
             if param['eftlin']:
 
@@ -441,13 +430,9 @@ def get_additional_field(
                 additional_field, lapfac*dens_term, h, param,tables
             )
                 chi = additional_field
-                print('Chi MG:')
                 chi = multigrid.linear(chi,lapfac*dens_term,h,param)
             
             else:
-
-                #print('Full solver.')
-                #print(param[['alphaB','alphaM','C2','C4','xi','nu']])
 
                 dens_term = utils.linear_operator(density,f1,f2)
                 additional_field = initialise_potential(
@@ -456,12 +441,6 @@ def get_additional_field(
                 chi = additional_field
                 chi = multigrid.FAS(chi, dens_term, h, param)
 
-
-
-            
-            #
-            
-            #quadratic.smoothing(chi,dens_term,h,param['C2'],param['C4'],param['alphaB'],param['alphaM'],param['H'],param['aexp'],6)
             return chi
 
 
