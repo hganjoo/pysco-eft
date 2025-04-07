@@ -424,7 +424,7 @@ def get_additional_field(
             if param['eftlin']:
 
                 lapfac = (param["alphaB"] - param["alphaM"]) / (2*param["alphaB"]*param["alphaM"] - param["alphaB"]**2 - param["C2"])
-                print('Chi Laplacian Factor:',lapfac)
+                logging.warning('Chi Laplacian Factor:',lapfac)
                 dens_term = utils.linear_operator(density,f1,f2)
                 additional_field = initialise_potential(
                 additional_field, lapfac*dens_term, h, param,tables
@@ -517,7 +517,7 @@ def rhs_poisson(
                 raise NotImplementedError(
                     f"{MOND_FUNCTION=}, should be 'simple', 'n', 'beta', 'gamma' or 'delta'"
                 )
-    elif param["theory"].casefold() == "eft": # change
+    elif param["theory"].casefold() == "eft": # this adds (alphaB - alphaM) * Lap(Chi) to the source term
         f1 = np.float32(
             1.5 * param["aexp"] * param["Om_m"] * param["parametrized_mu_z"]
         )

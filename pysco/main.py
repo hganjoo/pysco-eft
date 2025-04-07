@@ -90,6 +90,9 @@ def run(param) -> None:
             extra += f"_{param['mond_alpha']}"
     elif extra.casefold() == "parametrized".casefold():
         extra += f"_mu0_{param['parametrized_mu0']}"
+    elif extra.casefold() == "eft":
+        if (param["eftlin"]): extra = "eftlin"
+        extra += f"_alphaB0_{param['alphaB0']}_alphaM0_{param['alphaM0']}"
     extra += f"_{param['linear_newton_solver']}_ncoarse{param['ncoarse']}"
     param["extra"] = extra
     z_out = ast.literal_eval(param["z_out"])

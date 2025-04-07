@@ -73,32 +73,23 @@ def operator(
                 six = np.float32(6)
                 eight = np.float32(8)
                 two = np.float32(2)
-
-                
                 pins = pi[-1 + i,j,k] + pi[i,-1 + j,k] + pi[i,j,-1 + k] + pi[i,j,1 + k] + pi[i,1 + j,k] + pi[1 + i,j,k]
-                #pins = 0.
-                
                 av = (-six*C4)/(h4 * aH2)
-                
                 lin = (alphaB*(six*alphaB - two*six*alphaM) + six*C2)/h2
                 nlin = -eight*pins/(h4)
                 bv = lin - onebyfour*C4*nlin/(aH2)
-
                 lin = (
                     (alphaM - alphaB) * b[i,j,k]
                     + ((alphaB*(-alphaB + 2.*alphaM) - C2)*(pins))/h2
                 )
-
                 # Coeff of pi^0 in Q2[pi,pi]
                 q2offd = -onebyeight*((pi[i,-1 + j,-1 + k] - pi[i,-1 + j,1 + k] - pi[i,1 + j,-1 + k] + pi[i,1 + j,1 + k])**2 
                 - 16.*((pi[i,j,-1 + k] + pi[i,j,1 + k])*(pi[i,-1 + j,k] + pi[i,1 + j,k]) + pi[-1 + i,j,k]*(pi[i,-1 + j,k] + pi[i,j,-1 + k] + pi[i,j,1 + k] + pi[i,1 + j,k]) + (pi[i,-1 + j,k] + pi[i,j,-1 + k] + pi[i,j,1 + k] + pi[i,1 + j,k])*pi[1 + i,j,k]) 
                 + (pi[-1 + i,j,-1 + k] - pi[-1 + i,j,1 + k] - pi[1 + i,j,-1 + k] + pi[1 + i,j,1 + k])**2 
                 + (pi[-1 + i,-1 + j,k] - pi[-1 + i,1 + j,k] - pi[1 + i,-1 + j,k] + pi[1 + i,1 + j,k])**2)/(h4)
-
-
+                
                 cv = lin - onebyfour*C4*q2offd/(aH2)
 
-                
                 result[i,j,k] = av*pi[i,j,k]**2 + bv*pi[i,j,k] + cv
                 
 
@@ -168,15 +159,10 @@ def solution_quadratic_equation(
 
     
     pins = pi[-1 + x,y,z] + pi[x,-1 + y,z] + pi[x,y,-1 + z] + pi[x,y,1 + z] + pi[x,1 + y,z] + pi[1 + x,y,z]
-    #pins = 0
-    
     av = (-six*C4)/(h4 * aH2) # goes to zero for linear
-    av = av
-    
-    
+
     blin = (alphaB*(six*alphaB - two*six*alphaM) + six*C2)/h2
     bnlin = -eight*pins/(h4) # goes to zero for linear
-    
     bv = blin - onebyfour*C4*bnlin/(aH2) 
 
     lin = (
@@ -190,7 +176,6 @@ def solution_quadratic_equation(
     + (pi[-1 + x,y,-1 + z] - pi[-1 + x,y,1 + z] - pi[1 + x,y,-1 + z] + pi[1 + x,y,1 + z])**2 
     + (pi[-1 + x,-1 + y,z] - pi[-1 + x,1 + y,z] - pi[1 + x,-1 + y,z] + pi[1 + x,1 + y,z])**2)/(h4)
 
-
     cv = lin - onebyfour*C4*q2offd/(aH2)
 
     dterm = bv**2 - 4*av*cv
@@ -198,13 +183,7 @@ def solution_quadratic_equation(
     if dterm>0:
         qsol =  (-bv - np.sqrt(dterm)) / (2*av)
     else:
-        #print('warn-discriminant-norhs')
-        #print('dt neg.')
-        #print('D:',dterm,b,av,bv,cv,4*av*cv,bv**2,x,y,z)
-        #qsol = -bv/(2*av)
         qsol = -0.5*bv/av
-    
-    #qsol =  (-bv - np.sqrt(dterm)) / (2*av)
     
     return qsol
 
@@ -272,30 +251,20 @@ def solution_quadratic_equation_with_rhs(
 
     
     pins = pi[-1 + x,y,z] + pi[x,-1 + y,z] + pi[x,y,-1 + z] + pi[x,y,1 + z] + pi[x,1 + y,z] + pi[1 + x,y,z]
-    #pins = 0.
     
     av = (-six*C4)/(h4 * aH2) # goes to zero for linear
-    av = av
-    
-    
-
     blin = (alphaB*(six*alphaB - two*six*alphaM) + six*C2)/h2
     bnlin = -eight*pins/(h4) # goes to zero for linear
-    
     bv = blin - onebyfour*C4*bnlin/(aH2) 
-
     lin = (
                     (alphaM - alphaB) * b
                     + ((alphaB*(-alphaB + 2.*alphaM) - C2)*(pins))/h2
                 )
-
     # Coeff of pi^0 in Q2[pi,pi] goes to zero for linear
     q2offd = -onebyeight*((pi[x,-1 + y,-1 + z] - pi[x,-1 + y,1 + z] - pi[x,1 + y,-1 + z] + pi[x,1 + y,1 + z])**2 
     - 16.*((pi[x,y,-1 + z] + pi[x,y,1 + z])*(pi[x,-1 + y,z] + pi[x,1 + y,z]) + pi[-1 + x,y,z]*(pi[x,-1 + y,z] + pi[x,y,-1 + z] + pi[x,y,1 + z] + pi[x,1 + y,z]) + (pi[x,-1 + y,z] + pi[x,y,-1 + z] + pi[x,y,1 + z] + pi[x,1 + y,z])*pi[1 + x,y,z]) 
     + (pi[-1 + x,y,-1 + z] - pi[-1 + x,y,1 + z] - pi[1 + x,y,-1 + z] + pi[1 + x,y,1 + z])**2 
     + (pi[-1 + x,-1 + y,z] - pi[-1 + x,1 + y,z] - pi[1 + x,-1 + y,z] + pi[1 + x,1 + y,z])**2)/(h4)
-
-
     cv = lin - onebyfour*C4*q2offd/(aH2) - rhs
 
     dterm = bv**2 - 4*av*cv
@@ -303,11 +272,8 @@ def solution_quadratic_equation_with_rhs(
     if dterm>0:
         qsol =  (-bv - np.sqrt(dterm)) / (2*av)
     else:
-        #qsol = -bv/(2*av)
-        
         qsol = -0.5*bv/av
     
-    #qsol =  (-bv - np.sqrt(dterm)) / (2*av)
     
     return qsol
 
@@ -332,7 +298,7 @@ def jacobi(
     H: np.float32,
     a: np.float32,
     ) -> None:
-    """Gauss-Seidel quadratic equation solver \\
+    """Jacobi quadratic equation solver \\
     Solve the roots of u in the equation: \\
     a u^2 + bu + c = 0 \\
     for the EFT in Cusin et al (2017)\\
@@ -381,9 +347,9 @@ def jacobi_with_rhs(
     a: np.float32,
     rhs: npt.NDArray[np.float32]
     ) -> None:
-    """Gauss-Seidel quadratic equation solver \\
+    """Jacobi quadratic equation solver with rhs term \\
     Solve the roots of u in the equation: \\
-    a u^2 + bu + c = 0 \\
+    a u^2 + bu + c = rhs \\
     for the EFT in Cusin et al (2017)\\
     
     Parameters
@@ -610,7 +576,7 @@ def smoothing_with_rhs(
     n_smoothing: int,
     rhs: npt.NDArray[np.float32]) -> None:
     
-    """Smooth Chi field with several Jacobi iterations
+    """Smooth Chi field with several Jacobi iterations with rhs
 
     pi : npt.NDArray[np.float32]
         Scalar field [N_cells_1d, N_cells_1d, N_cells_1d]
@@ -819,9 +785,6 @@ def initialise_potential(
     """
     HG: 14/11/2024
 
-    VERY ROUGH VERSION - have to decide how to initialise the scalar field \\
-    this might be too slow
-    
     Solution for the Chi field \\
     using the linear order DE solution \\
     Laplacian[Chi] = mu_chi * delta 
@@ -852,7 +815,6 @@ def initialise_potential(
         for j in prange(-1,ncells_1d-1):
             for k in prange(-1,ncells_1d-1):
                 pi[i, j, k] = - one_by_six*lfac*h*h*b[i,j,k]
-    #print('Init F:',pi)
     
     return pi
 

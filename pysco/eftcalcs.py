@@ -13,6 +13,12 @@ from astropy.constants import pc,G
 def geteft(
         param: pd.Series,
         tables: List[interp1d]) -> List[np.float32]:
+    
+    """
+    Obtain some derived EFT parameters:
+    alphaB, alphaM, C2, C4.
+    Commented support for other params like xi,nu,mu_phi
+    """
 
     alphaB0 = param["alphaB0"]
     alphaM0 = param["alphaM0"]
@@ -40,6 +46,10 @@ def geteft(
     #C2 = -alphaM + alphaB*(1 + alphaM) + (1 + alphaB)*HdotbyH2 + (3*a**3*alphaB0*om_m)/(a**3*(1 - om_m) + om_m)**2 + a**(-3.)*1.5*Ia*om_m/(E**2)
     C2 = -alphaM + alphaB*(1 + alphaM) + (1 + alphaB)*HdotbyH2 + abdot + a**(-3.)*1.5*Ia*om_m/(E**2)
     C4 = -4*alphaB + 2*alphaM
+    #xi = alphaB - alphaM
+    #nu = -1*C2 -alphaB*(xi - alphaM)
+    #mu_chi = xi/nu
+    #mu_phi = 1 + xi*xi/nu
 
     return [alphaB,alphaM,C2,C4]
 

@@ -143,13 +143,7 @@ def FAS(
 
     # Main procedure: Multigrid
     logging.info("Start Full-Approximation Storage Multigrid")
-    
-    for _ in range(1):
-        V_cycle_FAS(x, b, param)
-        #print('xval:',x[0,0,0])
-        residual_error_tmp = residual_error(x, b, h, param)
-        print('reserr-FAS:',residual_error_tmp)
-    
+    V_cycle_FAS(x, b, param)
     residual_error_tmp = residual_error(x, b, h, param)
     logging.info(f"FAS: {residual_error_tmp=} {tolerance=}")
     return x
@@ -446,7 +440,7 @@ def smoothing(
                                 param["H"],
                                 param["aexp"],
                                 n_smoothing,
-                                rhs) #do change to rhs here
+                               rhs) #do change to rhs here
             
     
     else:
@@ -752,57 +746,46 @@ def F_cycle_FAS(
     
     h = np.float32(0.5 ** (param["ncoarse"] - nlevel))
     two = np.float32(2)
-    #print('Before sm1:',residual_error(x, b, h, param)) # debug
     smoothing(x, b, h, param["Npre"], param, rhs)
-    #print('After sm1:',residual_error(x, b, h, param)) # debug
-    if param['domg']:
+    res_c = restrict_residual(x, b, h, param, rhs)
+    x_c = mesh.restriction(x)
+    x_corr_c = x_c.copy()
+    b_c = mesh.restriction(b)
+    L_c = operator(x_c, two * h, param, b_c)
+    utils.add_vector_scalar_inplace(res_c, L_c, np.float32(1))
+    L_c = 0
+    if nlevel >= (param["ncoarse"] - 3):
+        smoothing(x_corr_c, b_c, two * h, param["Npre"], param, res_c)
+    else:
+        F_cycle_FAS(x_corr_c, b_c, param, nlevel + 1, res_c)
+    res_c = 0
+    utils.add_vector_scalar_inplace(x_corr_c, x_c, np.float32(-1))
+    if param["theory"].casefold() == "eft":
+        mesh.add_prolongation(x, x_corr_c)
+    else:
+        mesh.add_prolongation_half(x, x_corr_c)
+    x_corr_c = 0
+    smoothing(x, b, h, param["Npre"], param, rhs)
+    res_c = restrict_residual(x, b, h, param, rhs)
+    x_c = mesh.restriction(x)
+    x_corr_c = x_c.copy()
+    L_c = operator(x_c, two * h, param, b_c)
+    utils.add_vector_scalar_inplace(res_c, L_c, np.float32(1))
+    L_c = 0
 
-        res_c = restrict_residual(x, b, h, param, rhs)
-        x_c = mesh.restriction(x)
-        x_corr_c = x_c.copy()
-        b_c = mesh.restriction(b)
-        L_c = operator(x_c, two * h, param, b_c)
-        utils.add_vector_scalar_inplace(res_c, L_c, np.float32(1))
-        #print('resc:',res_c[0])
-        L_c = 0
-        if nlevel >= (param["ncoarse"] - 3):
-            #print('rese-xc-before:',residual_error(x_corr_c,b_c,two*h,param))
-            smoothing(x_corr_c, b_c, two * h, param["Npre"], param, res_c)
-            #print('rese-xc-before:',residual_error(x_corr_c,b_c,two*h,param))
-        else:
-            F_cycle_FAS(x_corr_c, b_c, param, nlevel + 1, res_c)
-        res_c = 0
-        utils.add_vector_scalar_inplace(x_corr_c, x_c, np.float32(-1))
-        if param["theory"].casefold() == "eft":
-            mesh.add_prolongation(x, x_corr_c)
-        else:
-            mesh.add_prolongation_half(x, x_corr_c)
-        x_corr_c = 0
-        #print('After add1:',residual_error(x, b, h, param)) # debug
-        smoothing(x, b, h, param["Npre"], param, rhs)
-        #print('After sm2:',residual_error(x, b, h, param)) # debug
-        res_c = restrict_residual(x, b, h, param, rhs)
-        x_c = mesh.restriction(x)
-        x_corr_c = x_c.copy()
-        L_c = operator(x_c, two * h, param, b_c)
-        utils.add_vector_scalar_inplace(res_c, L_c, np.float32(1))
-        L_c = 0
-
-        if nlevel >= (param["ncoarse"] - 3):
-            smoothing(x_corr_c, b_c, two * h, param["Npre"], param, res_c)
-        else:
-            V_cycle_FAS(x_corr_c, b_c, param, nlevel + 1, res_c)
-        res_c = 0
-        utils.add_vector_scalar_inplace(x_corr_c, x_c, np.float32(-1))
-        x_c = 0
-        if param["theory"].casefold() == "eft":
-            mesh.add_prolongation(x, x_corr_c)
-        else:
-            mesh.add_prolongation_half(x, x_corr_c)
-        #print('After add2:',residual_error(x, b, h, param)) # debug
-        x_corr_c = 0
+    if nlevel >= (param["ncoarse"] - 3):
+        smoothing(x_corr_c, b_c, two * h, param["Npre"], param, res_c)
+    else:
+        V_cycle_FAS(x_corr_c, b_c, param, nlevel + 1, res_c)
+    res_c = 0
+    utils.add_vector_scalar_inplace(x_corr_c, x_c, np.float32(-1))
+    x_c = 0
+    if param["theory"].casefold() == "eft":
+        mesh.add_prolongation(x, x_corr_c)
+    else:
+        mesh.add_prolongation_half(x, x_corr_c)
+    x_corr_c = 0
     smoothing(x, b, h, param["Npost"], param, rhs)
-    #print('After smf:',residual_error(x, b, h, param),'Field mean:',x.mean()) # debug
     
 
 

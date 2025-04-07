@@ -38,3 +38,5 @@ pysco/test-small-modp.ipynb
 /pysco/ab-048
 *.dat
 /pysco/ab-048
+*.h5
+pysco/rsim.py
