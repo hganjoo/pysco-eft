@@ -203,7 +203,7 @@ def pm(
             )
 
     elif "eft" == param["theory"].casefold():
-        force = mesh.derivative(potential, param["gradient_stencil_order"]) + (param["alphaB"] - param["alphaM"])*mesh.derivative(additional_field,param["gradient_stencil_order"])
+        force = mesh.derivative(potential, param["gradient_stencil_order"])
         
     else:
         if LINEAR_NEWTON_SOLVER == "full_fft":
@@ -431,7 +431,6 @@ def get_additional_field(
             )
                 chi = additional_field
                 chi = multigrid.linear(chi,lapfac*dens_term,h,param)
-                
             
             else:
 
@@ -441,11 +440,6 @@ def get_additional_field(
             )
                 chi = additional_field
                 chi = multigrid.FAS(chi, dens_term, h, param)
-                print('Subbing mean...')
-                chi = chi - np.mean(chi) # mean sub
-                print('New mean: {:.2e}'.format(chi.mean()))
-                #dneg = quadratic.discneg(chi,dens_term,h,param["C2"],param["C4"],param["alphaB"],param["alphaM"],param["H"],param["aexp"])
-                #print('Disc Neg Perc:',dneg.mean())
 
             return chi
 
@@ -523,6 +517,16 @@ def rhs_poisson(
                 raise NotImplementedError(
                     f"{MOND_FUNCTION=}, should be 'simple', 'n', 'beta', 'gamma' or 'delta'"
                 )
+    elif param["theory"].casefold() == "eft": # this adds (alphaB - alphaM) * Lap(Chi) to the source term
+        f1 = np.float32(
+            1.5 * param["aexp"] * param["Om_m"] * param["parametrized_mu_z"]
+        )
+        f2 = -f1
+        utils.linear_operator_inplace(density, f1, f2)
+        lap_chi = laplacian.operator(additional_field, h)
+        prefac = param["alphaB"] - param["alphaM"]
+        utils.add_vectors_inplace(density,prefac,lap_chi)
+    
     
     else:
         f1 = np.float32(

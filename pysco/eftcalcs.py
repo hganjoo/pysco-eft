@@ -31,6 +31,7 @@ def geteft(
             -3 * (1 + param["w0"] + param["wa"])
         ) * np.exp(-3 * param["wa"] * (1 - a))
 
+    E = np.sqrt(param["Om_m"] * a **(-3) + param["Om_lambda"] * evt)
     om_ma = param['Om_m'] / (param["Om_m"] + param["Om_lambda"] * evt * a ** 3)
     alphaB = alphaB0*(1-om_ma) / (1-om_m)
     alphaM = alphaM0*(1-om_ma) / (1-om_m)
@@ -46,10 +47,10 @@ def geteft(
     #C2 = -alphaM + alphaB*(1 + alphaM) + (1 + alphaB)*HdotbyH2 + (3*a**3*alphaB0*om_m)/(a**3*(1 - om_m) + om_m)**2 + a**(-3.)*1.5*Ia*om_m/(E**2)
     C2 = -alphaM + alphaB*(1 + alphaM) + (1 + alphaB)*HdotbyH2 + abdot + a**(-3.)*1.5*Ia*om_m/(E**2)
     C4 = -4*alphaB + 2*alphaM
-    #xi = alphaB - alphaM
-    #nu = -1*C2 -alphaB*(xi - alphaM)
-    #mu_chi = xi/nu
-    #mu_phi = 1 + xi*xi/nu
+    xi = alphaB - alphaM
+    nu = -1*C2 -alphaB*(xi - alphaM)
+    mu_chi = xi/nu
+    mu_phi = 1 + xi*xi/nu
 
-    return [alphaB,alphaM,C2,C4]
+    return [alphaB,alphaM,C2,C4,mu_phi,Ia]
 

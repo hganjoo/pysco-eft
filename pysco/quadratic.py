@@ -75,6 +75,94 @@ def operator(
                 two = np.float32(2)
                 pins = pi[-1 + i,j,k] + pi[i,-1 + j,k] + pi[i,j,-1 + k] + pi[i,j,1 + k] + pi[i,1 + j,k] + pi[1 + i,j,k]
                 av = (-six*C4)/(h4 * aH2)
+                blin = (alphaB*(six*alphaB - two*six*alphaM) + six*C2)/h2
+                nlin = -eight*pins/(h4)
+                bv = blin - onebyfour*C4*nlin/(aH2)
+                lin = (
+                    (alphaM - alphaB) * b[i,j,k]
+                    + ((alphaB*(-alphaB + 2.*alphaM) - C2)*(pins))/h2
+                )
+                # Coeff of pi^0 in Q2[pi,pi]
+                q2offd = -onebyeight*((pi[i,-1 + j,-1 + k] - pi[i,-1 + j,1 + k] - pi[i,1 + j,-1 + k] + pi[i,1 + j,1 + k])**2 
+                - 16.*((pi[i,j,-1 + k] + pi[i,j,1 + k])*(pi[i,-1 + j,k] + pi[i,1 + j,k]) + pi[-1 + i,j,k]*(pi[i,-1 + j,k] + pi[i,j,-1 + k] + pi[i,j,1 + k] + pi[i,1 + j,k]) + (pi[i,-1 + j,k] + pi[i,j,-1 + k] + pi[i,j,1 + k] + pi[i,1 + j,k])*pi[1 + i,j,k]) 
+                + (pi[-1 + i,j,-1 + k] - pi[-1 + i,j,1 + k] - pi[1 + i,j,-1 + k] + pi[1 + i,j,1 + k])**2 
+                + (pi[-1 + i,-1 + j,k] - pi[-1 + i,1 + j,k] - pi[1 + i,-1 + j,k] + pi[1 + i,1 + j,k])**2)/(h4)
+                
+                cv = lin - onebyfour*C4*q2offd/(aH2)
+
+                
+                if bv**2>4*av*cv:
+                    result[i,j,k] = av*pi[i,j,k]**2 + bv*pi[i,j,k] + cv
+                else:
+                    result[i,j,k] = blin*pi[i,j,k] + lin
+                
+                
+
+                
+    
+    return result
+
+@njit(
+    ["f4[:,:,::1](f4[:,:,::1], f4[:,:,::1], f4, f4, f4, f4, f4, f4, f4)"],
+    fastmath=True,
+    cache=True,
+    parallel=True,
+)
+def discneg(
+    pi: npt.NDArray[np.float32],
+    b: npt.NDArray[np.float32],
+    h: np.float32,
+    C2: np.float32, 
+    C4: np.float32,
+    alphaB: np.float32,
+    alphaM: np.float32,
+    H: np.float32,
+    a: np.float32
+    ) -> npt.NDArray[np.float32]:
+    """Quadratic operator
+
+    a pi^2 + b pi + c = 0 \\
+    EFT from Cusin et al. (2017)\\
+    
+    Parameters
+    ----------
+    pi : npt.NDArray[np.float32]
+        Scalar field [N_cells_1d, N_cells_1d, N_cells_1d]
+    b : npt.NDArray[np.float32]
+        Density term [N_cells_1d, N_cells_1d, N_cells_1d]
+    h : np.float32
+        Grid size
+    C2, C4, alphaB, alphaM : np.float32
+        EFT params
+    H : np.float32
+        Dimensionless Dimensionless Hubble param E(a) E(a)
+    a : np.float32
+        scale factor
+    
+        
+    Returns
+    -------
+    npt.NDArray[np.float32]
+        Quadratic operator(x) [N_cells_1d, N_cells_1d, N_cells_1d]
+
+    """
+    ncells_1d = pi.shape[0]
+    result = np.empty_like(pi)
+    for i in prange(-1, ncells_1d - 1):
+        for j in prange(-1, ncells_1d - 1):
+            for k in prange(-1, ncells_1d - 1):
+
+                h2 = h**2
+                h4 = h2**2
+                aH2 = (a*a*H)**2
+                
+                onebyfour = np.float32(0.25)
+                onebyeight = np.float32(0.125)
+                six = np.float32(6)
+                eight = np.float32(8)
+                two = np.float32(2)
+                pins = pi[-1 + i,j,k] + pi[i,-1 + j,k] + pi[i,j,-1 + k] + pi[i,j,1 + k] + pi[i,1 + j,k] + pi[1 + i,j,k]
+                av = (-six*C4)/(h4 * aH2)
                 lin = (alphaB*(six*alphaB - two*six*alphaM) + six*C2)/h2
                 nlin = -eight*pins/(h4)
                 bv = lin - onebyfour*C4*nlin/(aH2)
@@ -90,11 +178,9 @@ def operator(
                 
                 cv = lin - onebyfour*C4*q2offd/(aH2)
 
-                result[i,j,k] = av*pi[i,j,k]**2 + bv*pi[i,j,k] + cv
+                result[i,j,k] = (bv**2 - 4*av*cv)<0
                 
 
-                
-    
     return result
 
 
@@ -171,10 +257,7 @@ def solution_quadratic_equation(
                 )
 
     # Coeff of pi^0 in Q2[pi,pi] goes to zero for linear
-    q2offd = -onebyeight*((pi[x,-1 + y,-1 + z] - pi[x,-1 + y,1 + z] - pi[x,1 + y,-1 + z] + pi[x,1 + y,1 + z])**2 
-    - 16.*((pi[x,y,-1 + z] + pi[x,y,1 + z])*(pi[x,-1 + y,z] + pi[x,1 + y,z]) + pi[-1 + x,y,z]*(pi[x,-1 + y,z] + pi[x,y,-1 + z] + pi[x,y,1 + z] + pi[x,1 + y,z]) + (pi[x,-1 + y,z] + pi[x,y,-1 + z] + pi[x,y,1 + z] + pi[x,1 + y,z])*pi[1 + x,y,z]) 
-    + (pi[-1 + x,y,-1 + z] - pi[-1 + x,y,1 + z] - pi[1 + x,y,-1 + z] + pi[1 + x,y,1 + z])**2 
-    + (pi[-1 + x,-1 + y,z] - pi[-1 + x,1 + y,z] - pi[1 + x,-1 + y,z] + pi[1 + x,1 + y,z])**2)/(h4)
+    q2offd = -onebyeight*((pi[x,-1 + y,-1 + z] - pi[x,-1 + y,1 + z] - pi[x,1 + y,-1 + z] + pi[x,1 + y,1 + z])**2 - 16.*((pi[x,y,-1 + z] + pi[x,y,1 + z])*(pi[x,-1 + y,z] + pi[x,1 + y,z]) + pi[-1 + x,y,z]*(pi[x,-1 + y,z] + pi[x,y,-1 + z] + pi[x,y,1 + z] + pi[x,1 + y,z]) + (pi[x,-1 + y,z] + pi[x,y,-1 + z] + pi[x,y,1 + z] + pi[x,1 + y,z])*pi[1 + x,y,z]) + (pi[-1 + x,y,-1 + z] - pi[-1 + x,y,1 + z] - pi[1 + x,y,-1 + z] + pi[1 + x,y,1 + z])**2 + (pi[-1 + x,-1 + y,z] - pi[-1 + x,1 + y,z] - pi[1 + x,-1 + y,z] + pi[1 + x,1 + y,z])**2)/(h4)
 
     cv = lin - onebyfour*C4*q2offd/(aH2)
 
@@ -183,7 +266,8 @@ def solution_quadratic_equation(
     if dterm>0:
         qsol =  (-bv - np.sqrt(dterm)) / (2*av)
     else:
-        qsol = -0.5*bv/av
+        #qsol = -0.5*bv/av
+        qsol = -lin/blin
     
     return qsol
 
@@ -272,14 +356,137 @@ def solution_quadratic_equation_with_rhs(
     if dterm>0:
         qsol =  (-bv - np.sqrt(dterm)) / (2*av)
     else:
-        qsol = -0.5*bv/av
+        #qsol = -0.5*bv/av
+        qsol = -lin/blin
     
     
     return qsol
 
 
 
+@njit(
+    ["void(f4[:,:,::1], f4[:,:,::1], f4, f4, f4, f4, f4, f4, f4)"],
+    fastmath=True,
+    cache=True,
+    parallel=True,
+)
+def newton(
+    pi: npt.NDArray[np.float32],
+    b: npt.NDArray[np.float32],
+    h: np.float32,
+    C2: np.float32,
+    C4: np.float32,
+    alphaB: np.float32,
+    alphaM: np.float32,
+    H: np.float32,
+    a: np.float32
+    ) -> None:
+    ncells_1d = pi.shape[0]
+    pi_old_all = pi.copy()
 
+    h2 = h**2
+    h4 = h2**2
+    aH2 = (a*a*H)**2
+    onebyfour = np.float32(0.25)
+    onebyeight = np.float32(0.125)
+    six = np.float32(6)
+    eight = np.float32(8)
+    two = np.float32(2)
+
+    for i in range(-1, ncells_1d - 1):
+        for j in range(-1, ncells_1d - 1):
+            for k in range(-1, ncells_1d - 1):
+                pi_old = pi_old_all[i, j, k]
+
+                pins = (
+                    pi_old_all[i-1, j, k] + pi_old_all[i, j-1, k] + pi_old_all[i, j, k-1] +
+                    pi_old_all[i, j, k+1] + pi_old_all[i, j+1, k] + pi_old_all[i+1, j, k]
+                )
+
+                av = (-six*C4)/(h4 * aH2)
+                blin = (alphaB*(six*alphaB - two*six*alphaM) + six*C2)/h2
+                bnlin = -eight*pins/(h4)
+                bv = blin - onebyfour*C4*bnlin/(aH2)
+                lin = (alphaM - alphaB) * b[i, j, k] + ((alphaB*(-alphaB + 2.*alphaM) - C2)*(pins))/h2
+
+                q2offd = -onebyeight * (
+                    (pi_old_all[i, j-1, k-1] - pi_old_all[i, j-1, k+1] - pi_old_all[i, j+1, k-1] + pi_old_all[i, j+1, k+1])**2
+                    - 16.*((pi_old_all[i, j, k-1] + pi_old_all[i, j, k+1])*(pi_old_all[i, j-1, k] + pi_old_all[i, j+1, k])
+                    + pi_old_all[i-1, j, k]*(pi_old_all[i, j-1, k] + pi_old_all[i, j, k-1] + pi_old_all[i, j, k+1] + pi_old_all[i, j+1, k])
+                    + (pi_old_all[i, j-1, k] + pi_old_all[i, j, k-1] + pi_old_all[i, j, k+1] + pi_old_all[i, j+1, k])*pi_old_all[i+1, j, k])
+                    + (pi_old_all[i-1, j, k-1] - pi_old_all[i-1, j, k+1] - pi_old_all[i+1, j, k-1] + pi_old_all[i+1, j, k+1])**2
+                    + (pi_old_all[i-1, j-1, k] - pi_old_all[i-1, j+1, k] - pi_old_all[i+1, j-1, k] + pi_old_all[i+1, j+1, k])**2
+                ) / h4
+
+                cv = lin - onebyfour*C4*q2offd/(aH2)
+                L = av * pi_old**2 + bv * pi_old + cv
+                dLdpi = two * av * pi_old + bv
+
+                if abs(dLdpi) > 1e-6:
+                    pi[i, j, k] = pi_old - L / dLdpi
+
+
+@njit(
+    ["void(f4[:,:,::1], f4[:,:,::1], f4, f4, f4, f4, f4, f4, f4, f4[:,:,::1])"],
+    fastmath=True,
+    cache=True,
+    parallel=True,
+)
+def newton_with_rhs(
+    pi: npt.NDArray[np.float32],
+    b: npt.NDArray[np.float32],
+    h: np.float32,
+    C2: np.float32,
+    C4: np.float32,
+    alphaB: np.float32,
+    alphaM: np.float32,
+    H: np.float32,
+    a: np.float32,
+    rhs: npt.NDArray[np.float32]
+    ) -> None:
+    ncells_1d = pi.shape[0]
+    pi_old_all = pi.copy()
+
+    h2 = h**2
+    h4 = h2**2
+    aH2 = (a*a*H)**2
+    onebyfour = np.float32(0.25)
+    onebyeight = np.float32(0.125)
+    six = np.float32(6)
+    eight = np.float32(8)
+    two = np.float32(2)
+
+    for i in range(-1, ncells_1d - 1):
+        for j in range(-1, ncells_1d - 1):
+            for k in range(-1, ncells_1d - 1):
+                pi_old = pi_old_all[i, j, k]
+
+                pins = (
+                    pi_old_all[i-1, j, k] + pi_old_all[i, j-1, k] + pi_old_all[i, j, k-1] +
+                    pi_old_all[i, j, k+1] + pi_old_all[i, j+1, k] + pi_old_all[i+1, j, k]
+                )
+
+                av = (-six*C4)/(h4 * aH2)
+                blin = (alphaB*(six*alphaB - two*six*alphaM) + six*C2)/h2
+                bnlin = -eight*pins/(h4)
+                bv = blin - onebyfour*C4*bnlin/(aH2)
+                lin = (alphaM - alphaB) * b[i, j, k] + ((alphaB*(-alphaB + 2.*alphaM) - C2)*(pins))/h2
+
+                q2offd = -onebyeight * (
+                    (pi_old_all[i, j-1, k-1] - pi_old_all[i, j-1, k+1] - pi_old_all[i, j+1, k-1] + pi_old_all[i, j+1, k+1])**2
+                    - 16.*((pi_old_all[i, j, k-1] + pi_old_all[i, j, k+1])*(pi_old_all[i, j-1, k] + pi_old_all[i, j+1, k])
+                    + pi_old_all[i-1, j, k]*(pi_old_all[i, j-1, k] + pi_old_all[i, j, k-1] + pi_old_all[i, j, k+1] + pi_old_all[i, j+1, k])
+                    + (pi_old_all[i, j-1, k] + pi_old_all[i, j, k-1] + pi_old_all[i, j, k+1] + pi_old_all[i, j+1, k])*pi_old_all[i+1, j, k])
+                    + (pi_old_all[i-1, j, k-1] - pi_old_all[i-1, j, k+1] - pi_old_all[i+1, j, k-1] + pi_old_all[i+1, j, k+1])**2
+                    + (pi_old_all[i-1, j-1, k] - pi_old_all[i-1, j+1, k] - pi_old_all[i+1, j-1, k] + pi_old_all[i+1, j+1, k])**2
+                ) / h4
+
+                cv = lin - onebyfour*C4*q2offd/(aH2)
+                L = av * pi_old**2 + bv * pi_old + cv - rhs[i, j, k]
+                dLdpi = two * av * pi_old + bv
+
+                if abs(dLdpi) > 1e-6:
+                    pi[i, j, k] = pi_old - L / dLdpi
 
 
 @njit(
@@ -319,15 +526,16 @@ def jacobi(
         scale factor
     
     """
-
+    w = 0.4
     ncells_1d = pi.shape[0]
-    pi_old = np.copy(pi)
+    #pi_old = np.copy(pi)
     
-
     for ix in range(-1,ncells_1d - 1):
             for iy in range(-1,ncells_1d - 1):
                 for iz in range(-1,ncells_1d - 1):
-                    pi[ix,iy,iz] = solution_quadratic_equation(pi_old,b[ix,iy,iz],ix,iy,iz,h,C2,C4,alphaB,alphaM,H,a)
+                    pi_o = pi[ix,iy,iz]
+                    qs = solution_quadratic_equation(pi,b[ix,iy,iz],ix,iy,iz,h,C2,C4,alphaB,alphaM,H,a)
+                    pi[ix,iy,iz] = (1 - w)*qs + w*pi_o
 
 
 @njit(
@@ -369,14 +577,16 @@ def jacobi_with_rhs(
     rhs: npt.NDArray[np.float32]
         right hand side of the field equation [N_cells_1d, N_cells_1d, N_cells_1d]
     """
-
+    w = 0.4
     ncells_1d = pi.shape[0]
-    
-
+    #pi_old = np.copy(pi)
     for ix in range(-1,ncells_1d - 1):
             for iy in range(-1,ncells_1d - 1):
                 for iz in range(-1,ncells_1d - 1):
-                    pi[ix,iy,iz] = solution_quadratic_equation_with_rhs(pi,b[ix,iy,iz],ix,iy,iz,h,C2,C4,alphaB,alphaM,H,a,rhs[ix,iy,iz])
+                    pi_o = pi[ix,iy,iz]
+                    
+                    qs = solution_quadratic_equation_with_rhs(pi,b[ix,iy,iz],ix,iy,iz,h,C2,C4,alphaB,alphaM,H,a,rhs[ix,iy,iz])
+                    pi[ix,iy,iz] = (1 - w)*qs + w*pi_o
 
 
 @njit(

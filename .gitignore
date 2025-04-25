@@ -52,3 +52,6 @@ pysco/rsim.py
 /pysco/comp48b-vc5-10
 /pysco/comp48b-vc5-15
 /pysco/comp48b-vc5-40
+/pysco/comp12b-5-40-lin
+*.npy
+/pysco/comp12b-grid

@@ -142,10 +142,23 @@ def FAS(
         tolerance = param["tolerance"]
 
     # Main procedure: Multigrid
-    logging.info("Start Full-Approximation Storage Multigrid")
-    V_cycle_FAS(x, b, param)
-    residual_error_tmp = residual_error(x, b, h, param)
-    logging.info(f"FAS: {residual_error_tmp=} {tolerance=}")
+    residual_err = 1e30
+    while residual_err > tolerance:
+        V_cycle_FAS(x, b, param)
+        residual_error_tmp = residual_error(x, b, h, param)
+        logging.warning(f"{residual_error_tmp=} {tolerance=}")
+        if residual_error_tmp < tolerance or residual_err / residual_error_tmp < 2.5:
+            break
+        residual_err = residual_error_tmp
+    # logging.info("Start Full-Approximation Storage Multigrid")
+    # logging.warning(f"{param['ncyc']}")
+    # #if param['aexp'] > 0.25: param['ncyc'] = 3
+    # for _ in range(param['ncyc']):
+    #     V_cycle_FAS(x, b, param)
+    #     residual_error_tmp = residual_error(x, b, h, param)
+    #     logging.warning(f"FAS: {residual_error_tmp=} {tolerance=}")
+    #print(x)
+    print('Mean: {:.2e}, stdev: {:.2e}'.format(np.mean(x),np.std(x)))
     return x
 
 
@@ -619,7 +632,21 @@ def V_cycle_FAS(
     """
     h = np.float32(0.5 ** (param["ncoarse"] - nlevel))
     two = np.float32(2)
-    smoothing(x, b, h, param["Npre"], param, rhs)
+    #dneg = quadratic.discneg(x,b,h,param["C2"],param["C4"],param["alphaB"],param["alphaM"],param["H"],param["aexp"])
+    #print('Neg Perc:',dneg)
+    '''if (param['aexp']>0.5)&(param['aexp']<0.9):
+        nbef = np.isnan(x).sum()
+        print('Before:',nbef)
+        xc = x.copy()'''
+    smoothing(x, b, h, param["Npre_FAS"], param, rhs)
+    '''if (param['aexp']>0.5)&(param['aexp']<0.53):
+        naf = np.isnan(x).sum()
+        print('After:',naf)
+        if naf>nbef:
+            np.save('x-post',x)
+            np.save('x-pre',xc)
+            np.save('b',b)
+            np.save('para',[param['C2'],param['C4'],param['alphaB'],param['alphaM'],param['aexp'],param['H']])'''
     res_c = restrict_residual(x, b, h, param, rhs)
     x_c = mesh.restriction(x)
     x_corr_c = x_c.copy()
@@ -629,7 +656,7 @@ def V_cycle_FAS(
     L_c = 0
 
     if nlevel >= (param["ncoarse"] - 3):
-        smoothing(x_corr_c, b_c, two * h, param["Npre"], param, res_c)
+        smoothing(x_corr_c, b_c, two * h, param["Npre_FAS"], param, res_c)
     else:
         V_cycle_FAS(x_corr_c, b_c, param, nlevel + 1, res_c)
     res_c = 0
@@ -641,7 +668,71 @@ def V_cycle_FAS(
     else:
         mesh.add_prolongation_half(x, x_corr_c)
     x_corr_c = 0
-    smoothing(x, b, h, param["Npost"], param, rhs)
+    smoothing(x, b, h, param["Npost_FAS"], param, rhs)
+    
+@utils.time_me
+def V_cycle_FAS_new(
+    x: npt.NDArray[np.float32],
+    b: npt.NDArray[np.float32],
+    param: pd.Series,
+    nlevel: int = 0,
+    rhs: npt.NDArray[np.float32] = np.empty(0, dtype=np.float32),
+) -> None:
+    """
+    Multigrid V-cycle using Full Approximation Scheme (FAS) for nonlinear elliptic equations with 𝓛(u) = 0 form.
+
+    Parameters
+    ----------
+    x : np.ndarray
+        Current solution field (mutable)
+    b : np.ndarray
+        Source term (e.g., density)
+    param : pd.Series
+        Parameters including ncoarse, Npre_FAS, Npost_FAS, theory, etc.
+    nlevel : int
+        Current multigrid level (0 = finest)
+    rhs : np.ndarray
+        Right-hand side (FAS correction term), defaults to zero if not provided
+    """
+
+    h = np.float32(0.5 ** (param["ncoarse"] - nlevel))
+    two = np.float32(2.0)
+
+    # 1. Pre-smoothing
+    smoothing(x, b, h, param["Npre_FAS"], param, rhs)
+
+    # 2. FAS τ-correction: τ_H = L_H(R(x)) - R(L_h(x))
+    x_c = mesh.restriction(x)
+    b_c = mesh.restriction(b)
+
+    Lh_x = operator(x, h, param, b)
+    Lh_x_c = mesh.restriction(Lh_x)
+    Lh_x = 0
+
+    Lc_x_c = operator(x_c, two * h, param, b_c)
+    tau_c = Lc_x_c - Lh_x_c
+    Lc_x_c = 0
+    Lh_x_c = 0
+
+    # 3. Recursive coarse grid solve: L_H(x_corr_c) = τ_H
+    x_corr_c = x_c.copy()
+    if nlevel >= (param["ncoarse"] - 3):
+        smoothing(x_corr_c, b_c, two * h, param["Npre_FAS"], param, tau_c)
+    else:
+        V_cycle_FAS(x_corr_c, b_c, param, nlevel + 1, tau_c)
+    tau_c = 0
+
+    # 4. Correction: x ← x + P(x_corr_c - R(x))
+    utils.add_vector_scalar_inplace(x_corr_c, x_c, np.float32(-1.0))
+    x_c = 0
+    if param["theory"].casefold() == "eft":
+        mesh.add_prolongation(x, x_corr_c)
+    else:
+        mesh.add_prolongation_half(x, x_corr_c)
+    x_corr_c = 0
+
+    # 5. Post-smoothing
+    smoothing(x, b, h, param["Npost_FAS"], param, rhs)
 
 
 @utils.time_me

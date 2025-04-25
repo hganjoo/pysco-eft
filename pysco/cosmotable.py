@@ -439,7 +439,7 @@ def growth_eft(
     oma = omm / (den*av**3)
     ams = alphaM0*(1 - oma) / (1 - omm)
     Ia = np.exp(-1*trapezoid(y = ams,x=np.log(av)))
-    Ia = 1.
+    #Ia = 1.
     
     et1 = aexp**( -3*(w0 + wa ) ) * np.exp(3*wa * (1-aexp))
     abdot = omm * ( 3*et1*Ode_z0*wa - 3*et1*Ode_z0*(wa + w0)/aexp)

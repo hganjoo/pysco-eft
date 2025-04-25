@@ -92,7 +92,7 @@ def run(param) -> None:
         extra += f"_mu0_{param['parametrized_mu0']}"
     elif extra.casefold() == "eft":
         if (param["eftlin"]): extra = "eftlin"
-        extra += f"_alphaB0_{param['alphaB0']}_alphaM0_{param['alphaM0']}"
+        #extra += f"_alphaB0_{param['alphaB0']}_alphaM0_{param['alphaM0']}"
     extra += f"_{param['linear_newton_solver']}_ncoarse{param['ncoarse']}"
     param["extra"] = extra
     z_out = ast.literal_eval(param["z_out"])
@@ -122,6 +122,8 @@ def run(param) -> None:
     logging.warning("Tables, {}".format(len(tables)))
     acceleration, potential, additional_field = solver.pm(position, param, tables=tables)
     aexp_out = 1.0 / (np.array(z_out) + 1)
+    if param["aexp"]>0.25:
+        param['ncyc'] = 1
     aexp_out.sort()
     t_out = tables[1](np.log(aexp_out))
     logging.info(f"{aexp_out=}")
@@ -150,6 +152,7 @@ def run(param) -> None:
             t_out[param["i_snap"] - 1],
         )  
         h = 2**(-1*param['ncoarse'])
+        
         #print('Step:',param['nsteps'],position[0],velocity[0],laplacian.operator(additional_field,h)[0])# Put None instead of potential if you do not want to use previous step
 
         if (param["nsteps"] % param["n_reorder"]) == 0:
