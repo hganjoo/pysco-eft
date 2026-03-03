@@ -106,9 +106,10 @@ def pm(
                 + param["Om_lambda"] * evolution_term
             )
         )
-        param["parametrized_mu_z"] = np.float32(
+        '''param["parametrized_mu_z"] = np.float32(
             1 + param["parametrized_mu0"] * omega_lambda_z / param["Om_lambda"]
-        )   
+        )   '''
+        param["parametrized_mu_z"] = np.float32(1.2)
     elif THEORY == "eft":
         param["parametrized_mu_z"] = tables[13](np.log(param['aexp']))
     else:
@@ -293,9 +294,6 @@ def initialise_potential(
             potential = utils.prod_vector_scalar(rhs, minus_one_sixth_h2)
     
     else:
-        if param["theory"].casefold() == "eft":
-            potential = quadratic.initialise_potential(rhs,h,param["C2"],param["alphaB"],param["alphaM"]
-                                                       )
 
         logging.info("Rescale potential from previous step for Newtonian potential")
         if not param["compute_additional_field"]:
@@ -305,6 +303,10 @@ def initialise_potential(
                 / (param["aexp_old"] * tables[3](np.log(param["aexp_old"])))
             )
             utils.prod_vector_scalar_inplace(potential, scaling)
+
+        elif "eft" == param["theory"].casefold():
+            potential = quadratic.initialise_potential(rhs,h,param["C2"],param["alphaB"],param["alphaM"]
+                                                       )
 
     return potential
 
@@ -439,11 +441,13 @@ def get_additional_field(
                 additional_field = initialise_potential(
                 additional_field, dens_term, h, param,tables
             )
-                chi = additional_field
+                chi = additional_field.astype(np.float32)
                 chi = multigrid.FAS(chi, dens_term, h, param)
                 print('Subbing mean...')
                 chi = chi - np.mean(chi) # mean sub
                 print('New mean: {:.2e}'.format(chi.mean()))
+                print('lap mean: {:.2e}'.format(np.mean(laplacian.operator(chi,h))) )
+                print('delta mean: {:.2e}'.format(dens_term.mean()))
                 #dneg = quadratic.discneg(chi,dens_term,h,param["C2"],param["C4"],param["alphaB"],param["alphaM"],param["H"],param["aexp"])
                 #print('Disc Neg Perc:',dneg.mean())
 

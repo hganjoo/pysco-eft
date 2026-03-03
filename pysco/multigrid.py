@@ -142,13 +142,23 @@ def FAS(
         tolerance = param["tolerance"]
 
     # Main procedure: Multigrid
-    residual_err = 1e30
+    
+    residual_err = residual_error(x, b, h, param)
+    logging.warning(f"res_err before vc: {residual_err=} ")
     while residual_err > tolerance:
+    #for _ in range(6):
+        #x_old = np.copy(x)
         V_cycle_FAS(x, b, param)
         residual_error_tmp = residual_error(x, b, h, param)
         logging.warning(f"{residual_error_tmp=} {tolerance=}")
+        '''if residual_err < residual_error_tmp:
+            x = x_old
+            logging.warning(f"Exiting extra cycle. reserrs: {residual_error_tmp=},{residual_err=}")
+            break'''
         if residual_error_tmp < tolerance or residual_err / residual_error_tmp < 2.5:
             break
+        
+
         residual_err = residual_error_tmp
     # logging.info("Start Full-Approximation Storage Multigrid")
     # logging.warning(f"{param['ncyc']}")
@@ -158,7 +168,7 @@ def FAS(
     #     residual_error_tmp = residual_error(x, b, h, param)
     #     logging.warning(f"FAS: {residual_error_tmp=} {tolerance=}")
     #print(x)
-    print('Mean: {:.2e}, stdev: {:.2e}'.format(np.mean(x),np.std(x)))
+    print('Var: {:.2e}'.format(np.std(x)/np.abs(np.mean(x))))
     return x
 
 

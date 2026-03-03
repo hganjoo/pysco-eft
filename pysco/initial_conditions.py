@@ -207,6 +207,12 @@ def generate(
         position, velocity = read_hdf5(param)
         finalise_initial_conditions(position, velocity, param, do_reorder=True)
         return position, velocity
+    
+    elif INITIAL_CONDITIONS[-5:].casefold() == ".hdf5".casefold():
+        position, velocity = read_ramses(param)
+        finalise_initial_conditions(position, velocity, param, do_reorder=True)
+        return position, velocity
+    
     else:  # Gadget format
         position, velocity = read_gadget(param)
         finalise_initial_conditions(position, velocity, param, do_reorder=True)
@@ -278,6 +284,35 @@ def finalise_initial_conditions(
                 f"{param['snapshot_format']=}, should be 'parquet' or 'hdf5'"
             )
     logging.warning(f"Write initial snapshot...{snap_name=}")
+
+def read_ramses(
+    param: pd.Series,
+) -> Tuple[npt.NDArray[np.float32], npt.NDArray[np.float32]]:
+    
+    import h5py 
+
+    logging.warning(f"Read {param['initial_conditions']}. Converted ICs file from RAMSES.")
+    f = h5py.File(param["initial_conditions"], "r")
+
+    param["aexp"] = f["aexp"][()]
+    logging.warning(f"Initial redshift snapshot at z = {1./param['aexp'] - 1}")
+    utils.set_units(param)
+
+    
+    position = f['position'][:].astype(np.float32)
+    velocity = f['velocity'][:].astype(np.float32)
+
+    return position,velocity
+
+
+
+
+
+
+
+
+
+    
 
 
 def read_hdf5(

@@ -208,7 +208,7 @@ def compute_growth_functions(
     # Time points where the solution is computed
     lnaexp_array = np.linspace(lnaexp_span[0], lnaexp_span[1], 100_000)
 
-    if param["theory"].casefold() == "parametrized":
+    if param["theory"].casefold() == "parametrized-change":
         solution = solve_ivp(
             growth_parametrized,
             lnaexp_span,

@@ -19,7 +19,7 @@ def geteft(
     alphaB, alphaM, C2, C4.
     Commented support for other params like xi,nu,mu_phi
     """
-
+        
     alphaB0 = param["alphaB0"]
     alphaM0 = param["alphaM0"]
     a = param["aexp"]
@@ -44,7 +44,7 @@ def geteft(
     abdot = abdot / (et1*param["Om_lambda"] + om_m)**2
     abdot = abdot / (1 - om_m)
     abdot = abdot * alphaB0 * a
-    #C2 = -alphaM + alphaB*(1 + alphaM) + (1 + alphaB)*HdotbyH2 + (3*a**3*alphaB0*om_m)/(a**3*(1 - om_m) + om_m)**2 + a**(-3.)*1.5*Ia*om_m/(E**2)
+    #C2n = -alphaM + alphaB*(1 + alphaM) + (1 + alphaB)*HdotbyH2 + (3*a**3*alphaB0*om_m)/(a**3*(1 - om_m) + om_m)**2 + a**(-3.)*1.5*Ia*om_m/(E**2)
     C2 = -alphaM + alphaB*(1 + alphaM) + (1 + alphaB)*HdotbyH2 + abdot + a**(-3.)*1.5*Ia*om_m/(E**2)
     C4 = -4*alphaB + 2*alphaM
     xi = alphaB - alphaM
@@ -52,5 +52,5 @@ def geteft(
     mu_chi = xi/nu
     mu_phi = 1 + xi*xi/nu
 
-    return [alphaB,alphaM,C2,C4,mu_phi,Ia]
+    return [alphaB,alphaM,C2,C4,mu_phi,Ia,xi,nu,E]
 

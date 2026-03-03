@@ -6,7 +6,7 @@ path = '.'
 param = pd.Series({
     "theory": "eft",
     'eftlin': False,
-    "alphaB0": -0.48,
+    "alphaB0": -0.24,
     "alphaM0": 0.0,
     "extra":'04_01',
     "nthreads": 6,
@@ -27,7 +27,7 @@ param = pd.Series({
     "dealiased_ICS": False,
     "power_spectrum_file": f"{path}/pk_lcdmw7v2.dat",
     "initial_conditions": "2LPT",
-    "base": f"{path}/compf-newton/",
+    "base": f"{path}/compf-24c/",
     "z_out": "[0]",
     "output_snapshot_format": "HDF5",
     "save_power_spectrum": "no",
@@ -40,8 +40,8 @@ param = pd.Series({
     "gradient_stencil_order": 7,
     "Npre": 2,
     "Npost": 1,
-    "Npre_FAS": 5,
-    "Npost_FAS": 15,
+    "Npre_FAS": 2,
+    "Npost_FAS": 10,
     "ncyc": 1,
     "domg": True,
     "epsrel": 1e-2,
@@ -50,4 +50,19 @@ param = pd.Series({
     "Om_lambda":0.742589237,
     })
 
-main.run(param)
+paramcopy = param.copy(deep=True)
+
+larr = ['a','b','c','d','e']
+aarr = [-0.2,-0.1,0,0.1,0.2]
+
+larr = ['e']
+aarr = [0.2]
+
+for x in range(len(larr)):
+    param = paramcopy.copy(deep=True)
+    param['alphaM0'] = aarr[x]
+    param['base'] = f"{path}/compf-2-2-24{larr[x]}/"
+    print(f'Running case {larr[x]}... {param["alphaM0"]}.')
+    main.run(param)
+
+# base case with 5-5

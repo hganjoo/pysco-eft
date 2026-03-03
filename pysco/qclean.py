@@ -67,36 +67,41 @@ def operator(
                 h2 = h**2
                 h4 = h2**2
                 aH2 = (a*a*H)**2
-                
                 onebyfour = np.float32(0.25)
                 onebyeight = np.float32(0.125)
                 six = np.float32(6)
                 eight = np.float32(8)
                 two = np.float32(2)
-                pins = pi[-1 + i,j,k] + pi[i,-1 + j,k] + pi[i,j,-1 + k] + pi[i,j,1 + k] + pi[i,1 + j,k] + pi[1 + i,j,k]
-                av = (-six*C4)/(h4 * aH2)
-                blin = (alphaB*(six*alphaB - two*six*alphaM) + six*C2)/h2
-                nlin = -eight*pins/(h4)
-                bv = blin - onebyfour*C4*nlin/(aH2)
-                lin = (
-                    (alphaM - alphaB) * b[i,j,k]
-                    + ((alphaB*(-alphaB + 2.*alphaM) - C2)*(pins))/h2
-                )
-                # Coeff of pi^0 in Q2[pi,pi]
-                q2offd = -onebyeight*((pi[i,-1 + j,-1 + k] - pi[i,-1 + j,1 + k] - pi[i,1 + j,-1 + k] + pi[i,1 + j,1 + k])**2 
-                - 16.*((pi[i,j,-1 + k] + pi[i,j,1 + k])*(pi[i,-1 + j,k] + pi[i,1 + j,k]) + pi[-1 + i,j,k]*(pi[i,-1 + j,k] + pi[i,j,-1 + k] + pi[i,j,1 + k] + pi[i,1 + j,k]) + (pi[i,-1 + j,k] + pi[i,j,-1 + k] + pi[i,j,1 + k] + pi[i,1 + j,k])*pi[1 + i,j,k]) 
-                + (pi[-1 + i,j,-1 + k] - pi[-1 + i,j,1 + k] - pi[1 + i,j,-1 + k] + pi[1 + i,j,1 + k])**2 
-                + (pi[-1 + i,-1 + j,k] - pi[-1 + i,1 + j,k] - pi[1 + i,-1 + j,k] + pi[1 + i,1 + j,k])**2)/(h4)
-                
-                cv = lin - onebyfour*C4*q2offd/(aH2)
 
+                p = alphaB*(two*alphaM - alphaB) - C2
+                q = alphaM - alphaB
+                r = -onebyfour*C4/aH2
+
+                sx = pi[i+1,j,k] + pi[i-1,j,k]
+                sy = pi[i,j+1,k] + pi[i,j-1,k]
+                sz = pi[i,j,k+1] + pi[i,j,k-1]  
+
+                pi_xy = pi[i+1, j+1, k] - pi[i+1, j-1, k]- pi[i-1, j+1, k] + pi[i-1, j-1, k]
+                pi_xz = pi[i+1,j,k+1] - pi[i+1,j,k-1] - pi[i-1,j,k+1] + pi[i-1,j,k-1]
+                pi_yz = pi[i,j+1,k+1] - pi[i,j+1,k-1] - pi[i,j-1,k+1] + pi[i,j-1,k-1]
+
+                pins = sx + sy + sz
+
+                av = six*two*two*r / h4
+
+                
+                blin = -six*p/h2
+                bnlin = -eight*pins*r/h4
+                bv = blin + bnlin
+
+                clin = q*b[i,j,k] + p*pins/h2
+                cnlin = two*r*((sx*sy + sy*sz + sz*sx) - onebyfour**2*(pi_xy**2 + pi_yz**2 + pi_xz**2)) / h4
+                cv = clin + cnlin
                 
                 if bv**2>4*av*cv:
                     result[i,j,k] = av*pi[i,j,k]**2 + bv*pi[i,j,k] + cv
                 else:
-                    #result[i,j,k] = blin*pi[i,j,k] + lin
-                    result[i,j,k] = av*pi[i,j,k]**2 + bv*pi[i,j,k] + cv
-
+                    result[i,j,k] = blin*pi[i,j,k] + clin
                     
                 
                 
@@ -158,28 +163,36 @@ def discneg(
                 h2 = h**2
                 h4 = h2**2
                 aH2 = (a*a*H)**2
-                
                 onebyfour = np.float32(0.25)
                 onebyeight = np.float32(0.125)
                 six = np.float32(6)
                 eight = np.float32(8)
                 two = np.float32(2)
-                pins = pi[-1 + i,j,k] + pi[i,-1 + j,k] + pi[i,j,-1 + k] + pi[i,j,1 + k] + pi[i,1 + j,k] + pi[1 + i,j,k]
-                av = (-six*C4)/(h4 * aH2)
-                lin = (alphaB*(six*alphaB - two*six*alphaM) + six*C2)/h2
-                nlin = -eight*pins/(h4)
-                bv = lin - onebyfour*C4*nlin/(aH2)
-                lin = (
-                    (alphaM - alphaB) * b[i,j,k]
-                    + ((alphaB*(-alphaB + 2.*alphaM) - C2)*(pins))/h2
-                )
-                # Coeff of pi^0 in Q2[pi,pi]
-                q2offd = -onebyeight*((pi[i,-1 + j,-1 + k] - pi[i,-1 + j,1 + k] - pi[i,1 + j,-1 + k] + pi[i,1 + j,1 + k])**2 
-                - 16.*((pi[i,j,-1 + k] + pi[i,j,1 + k])*(pi[i,-1 + j,k] + pi[i,1 + j,k]) + pi[-1 + i,j,k]*(pi[i,-1 + j,k] + pi[i,j,-1 + k] + pi[i,j,1 + k] + pi[i,1 + j,k]) + (pi[i,-1 + j,k] + pi[i,j,-1 + k] + pi[i,j,1 + k] + pi[i,1 + j,k])*pi[1 + i,j,k]) 
-                + (pi[-1 + i,j,-1 + k] - pi[-1 + i,j,1 + k] - pi[1 + i,j,-1 + k] + pi[1 + i,j,1 + k])**2 
-                + (pi[-1 + i,-1 + j,k] - pi[-1 + i,1 + j,k] - pi[1 + i,-1 + j,k] + pi[1 + i,1 + j,k])**2)/(h4)
+
+                p = alphaB*(two*alphaM - alphaB) - C2
+                q = alphaM - alphaB
+                r = -onebyfour*C4/aH2
+
+                sx = pi[i+1,j,k] + pi[i-1,j,k]
+                sy = pi[i,j+1,k] + pi[i,j-1,k]
+                sz = pi[i,j,k+1] + pi[i,j,k-1]  
+
+                pi_xy = pi[i+1, j+1, k] - pi[i+1, j-1, k]- pi[i-1, j+1, k] + pi[i-1, j-1, k]
+                pi_xz = pi[i+1,j,k+1] - pi[i+1,j,k-1] - pi[i-1,j,k+1] + pi[i-1,j,k-1]
+                pi_yz = pi[i,j+1,k+1] - pi[i,j+1,k-1] - pi[i,j-1,k+1] + pi[i,j-1,k-1]
+
+                pins = sx + sy + sz
+
+                av = six*two*two*r / h4
+
                 
-                cv = lin - onebyfour*C4*q2offd/(aH2)
+                blin = -six*p/h2
+                bnlin = -eight*pins*r/h4
+                bv = blin + bnlin
+
+                clin = q*b[i,j,k] + p*pins/h2
+                cnlin = two*r*((sx*sy + sy*sz + sz*sx) - onebyfour**2*(pi_xy**2 + pi_yz**2 + pi_xz**2)) / h4
+                cv = clin + cnlin
 
                 result[i,j,k] = (bv**2 - 4*av*cv)<0
                 
@@ -195,9 +208,9 @@ def discneg(
 def solution_quadratic_equation(
     pi: npt.NDArray[np.float32],
     b: np.float32,
-    x: np.int32,
-    y: np.int32,
-    z: np.int32,
+    i: np.int32,
+    j: np.int32,
+    k: np.int32,
     h: np.float32,
     C2: np.float32,
     C4: np.float32,
@@ -246,31 +259,38 @@ def solution_quadratic_equation(
     eight = np.float32(8)
     two = np.float32(2)
 
+    p = alphaB*(two*alphaM - alphaB) - C2
+    q = alphaM - alphaB
+    r = -onebyfour*C4/aH2
+
+    sx = pi[i+1,j,k] + pi[i-1,j,k]
+    sy = pi[i,j+1,k] + pi[i,j-1,k]
+    sz = pi[i,j,k+1] + pi[i,j,k-1]  
+
+    pi_xy = pi[i+1, j+1, k] - pi[i+1, j-1, k]- pi[i-1, j+1, k] + pi[i-1, j-1, k]
+    pi_xz = pi[i+1,j,k+1] - pi[i+1,j,k-1] - pi[i-1,j,k+1] + pi[i-1,j,k-1]
+    pi_yz = pi[i,j+1,k+1] - pi[i,j+1,k-1] - pi[i,j-1,k+1] + pi[i,j-1,k-1]
+
+    pins = sx + sy + sz
+
+    av = six*two*two*r / h4
+
     
-    pins = pi[-1 + x,y,z] + pi[x,-1 + y,z] + pi[x,y,-1 + z] + pi[x,y,1 + z] + pi[x,1 + y,z] + pi[1 + x,y,z]
-    av = (-six*C4)/(h4 * aH2) # goes to zero for linear
+    blin = -six*p/h2
+    bnlin = -eight*pins*r/h4
+    bv = blin + bnlin
 
-    blin = (alphaB*(six*alphaB - two*six*alphaM) + six*C2)/h2
-    bnlin = -eight*pins/(h4) # goes to zero for linear
-    bv = blin - onebyfour*C4*bnlin/(aH2) 
-
-    lin = (
-                    (alphaM - alphaB) * b
-                    + ((alphaB*(-alphaB + 2.*alphaM) - C2)*(pins))/h2
-                )
-
-    # Coeff of pi^0 in Q2[pi,pi] goes to zero for linear
-    q2offd = -onebyeight*((pi[x,-1 + y,-1 + z] - pi[x,-1 + y,1 + z] - pi[x,1 + y,-1 + z] + pi[x,1 + y,1 + z])**2 - 16.*((pi[x,y,-1 + z] + pi[x,y,1 + z])*(pi[x,-1 + y,z] + pi[x,1 + y,z]) + pi[-1 + x,y,z]*(pi[x,-1 + y,z] + pi[x,y,-1 + z] + pi[x,y,1 + z] + pi[x,1 + y,z]) + (pi[x,-1 + y,z] + pi[x,y,-1 + z] + pi[x,y,1 + z] + pi[x,1 + y,z])*pi[1 + x,y,z]) + (pi[-1 + x,y,-1 + z] - pi[-1 + x,y,1 + z] - pi[1 + x,y,-1 + z] + pi[1 + x,y,1 + z])**2 + (pi[-1 + x,-1 + y,z] - pi[-1 + x,1 + y,z] - pi[1 + x,-1 + y,z] + pi[1 + x,1 + y,z])**2)/(h4)
-
-    cv = lin - onebyfour*C4*q2offd/(aH2)
+    clin = q*b + p*pins/h2
+    cnlin = two*r*((sx*sy + sy*sz + sz*sx) - onebyfour**2*(pi_xy**2 + pi_yz**2 + pi_xz**2)) / h4
+    cv = clin + cnlin
 
     dterm = bv**2 - 4*av*cv
     
     if dterm>0:
         qsol =  (-bv - np.sqrt(dterm)) / (2*av)
     else:
-        qsol = -0.5*bv/av
-        #qsol = -lin/blin
+        #qsol = -0.5*bv/av
+        qsol = -clin/blin
     
     return qsol
 
@@ -282,9 +302,9 @@ def solution_quadratic_equation(
 def solution_quadratic_equation_with_rhs(
     pi: npt.NDArray[np.float32],
     b: np.float32,
-    x: np.int32,
-    y: np.int32,
-    z: np.int32,
+    i: np.int32,
+    j: np.int32,
+    k: np.int32,
     h: np.float32,
     C2: np.float32,
     C4: np.float32,
@@ -336,31 +356,40 @@ def solution_quadratic_equation_with_rhs(
     eight = np.float32(8)
     two = np.float32(2)
 
+    p = alphaB*(two*alphaM - alphaB) - C2
+    q = alphaM - alphaB
+    r = -onebyfour*C4/aH2
+
+    sx = pi[i+1,j,k] + pi[i-1,j,k]
+    sy = pi[i,j+1,k] + pi[i,j-1,k]
+    sz = pi[i,j,k+1] + pi[i,j,k-1]  
+
+    pi_xy = pi[i+1, j+1, k] - pi[i+1, j-1, k]- pi[i-1, j+1, k] + pi[i-1, j-1, k]
+    pi_xz = pi[i+1,j,k+1] - pi[i+1,j,k-1] - pi[i-1,j,k+1] + pi[i-1,j,k-1]
+    pi_yz = pi[i,j+1,k+1] - pi[i,j+1,k-1] - pi[i,j-1,k+1] + pi[i,j-1,k-1]
+
+    pins = sx + sy + sz
+
+    av = six*two*two*r / h4
+
     
-    pins = pi[-1 + x,y,z] + pi[x,-1 + y,z] + pi[x,y,-1 + z] + pi[x,y,1 + z] + pi[x,1 + y,z] + pi[1 + x,y,z]
     
-    av = (-six*C4)/(h4 * aH2) # goes to zero for linear
-    blin = (alphaB*(six*alphaB - two*six*alphaM) + six*C2)/h2
-    bnlin = -eight*pins/(h4) # goes to zero for linear
-    bv = blin - onebyfour*C4*bnlin/(aH2) 
-    lin = (
-                    (alphaM - alphaB) * b
-                    + ((alphaB*(-alphaB + 2.*alphaM) - C2)*(pins))/h2
-                )
-    # Coeff of pi^0 in Q2[pi,pi] goes to zero for linear
-    q2offd = -onebyeight*((pi[x,-1 + y,-1 + z] - pi[x,-1 + y,1 + z] - pi[x,1 + y,-1 + z] + pi[x,1 + y,1 + z])**2 
-    - 16.*((pi[x,y,-1 + z] + pi[x,y,1 + z])*(pi[x,-1 + y,z] + pi[x,1 + y,z]) + pi[-1 + x,y,z]*(pi[x,-1 + y,z] + pi[x,y,-1 + z] + pi[x,y,1 + z] + pi[x,1 + y,z]) + (pi[x,-1 + y,z] + pi[x,y,-1 + z] + pi[x,y,1 + z] + pi[x,1 + y,z])*pi[1 + x,y,z]) 
-    + (pi[-1 + x,y,-1 + z] - pi[-1 + x,y,1 + z] - pi[1 + x,y,-1 + z] + pi[1 + x,y,1 + z])**2 
-    + (pi[-1 + x,-1 + y,z] - pi[-1 + x,1 + y,z] - pi[1 + x,-1 + y,z] + pi[1 + x,1 + y,z])**2)/(h4)
-    cv = lin - onebyfour*C4*q2offd/(aH2) - rhs
+    blin = -six*p/h2
+    bnlin = -eight*pins*r/h4
+    bv = blin + bnlin
+
+    clin = q*b + p*pins/h2
+    cnlin = two*r*((sx*sy + sy*sz + sz*sx) - onebyfour**2*(pi_xy**2 + pi_yz**2 + pi_xz**2)) / h4
+    cv = clin + cnlin - rhs
+    
 
     dterm = bv**2 - 4*av*cv
     
     if dterm>0:
         qsol =  (-bv - np.sqrt(dterm)) / (2*av)
     else:
-        qsol = -0.5*bv/av
-        #qsol = -lin/blin
+        
+        qsol = -clin/blin
     
     
     return qsol
@@ -538,15 +567,14 @@ def jacobi(
     """
     w = 0.4
     ncells_1d = pi.shape[0]
-    pi_old = np.copy(pi)
+    #pi_old = np.copy(pi)
     
     for ix in range(-1,ncells_1d - 1):
             for iy in range(-1,ncells_1d - 1):
                 for iz in range(-1,ncells_1d - 1):
-                    #pi_o = pi[ix,iy,iz]
-                    qs = solution_quadratic_equation(pi_old,b[ix,iy,iz],ix,iy,iz,h,C2,C4,alphaB,alphaM,H,a)
-                    #pi[ix,iy,iz] = (1 - w)*qs + w*pi_o
-                    pi[ix,iy,iz] = qs
+                    pi_o = pi[ix,iy,iz]
+                    qs = solution_quadratic_equation(pi,b[ix,iy,iz],ix,iy,iz,h,C2,C4,alphaB,alphaM,H,a)
+                    pi[ix,iy,iz] = (1 - w)*qs + w*pi_o
 
 
 @njit(
@@ -590,14 +618,14 @@ def jacobi_with_rhs(
     """
     w = 0.4
     ncells_1d = pi.shape[0]
-    pi_old = np.copy(pi)
+    #pi_old = np.copy(pi)
     for ix in range(-1,ncells_1d - 1):
             for iy in range(-1,ncells_1d - 1):
                 for iz in range(-1,ncells_1d - 1):
                     pi_o = pi[ix,iy,iz]
-                    qs = solution_quadratic_equation_with_rhs(pi_old,b[ix,iy,iz],ix,iy,iz,h,C2,C4,alphaB,alphaM,H,a,rhs[ix,iy,iz])
-                    #pi[ix,iy,iz] = (1 - w)*qs + w*pi_o
-                    pi[ix,iy,iz] = qs
+                    
+                    qs = solution_quadratic_equation_with_rhs(pi,b[ix,iy,iz],ix,iy,iz,h,C2,C4,alphaB,alphaM,H,a,rhs[ix,iy,iz])
+                    pi[ix,iy,iz] = (1 - w)*qs + w*pi_o
 
 
 @njit(
@@ -781,9 +809,9 @@ def smoothing(
     """
     
     for _ in range(n_smoothing):
-        #jacobi(pi, b, h, C2, C4, alphaB, alphaM, H, a)
+        jacobi(pi, b, h, C2, C4, alphaB, alphaM, H, a)
         #newton(pi, b, h, C2, C4, alphaB, alphaM, H, a)
-        gauss_seidel(pi, b, h, C2, C4, alphaB, alphaM, H, a)
+        #gauss_seidel(pi, b, h, C2, C4, alphaB, alphaM, H, a)
 
 def smoothing_with_rhs(
     pi: npt.NDArray[np.float32],
@@ -818,9 +846,9 @@ def smoothing_with_rhs(
     """
     
     for _ in range(n_smoothing):
-        #jacobi_with_rhs(pi, b, h, C2, C4, alphaB, alphaM, H, a, rhs)
+        jacobi_with_rhs(pi, b, h, C2, C4, alphaB, alphaM, H, a, rhs)
         #newton_with_rhs(pi, b, h, C2, C4, alphaB, alphaM, H, a, rhs)
-        gauss_seidel_with_rhs(pi, b, h, C2, C4, alphaB, alphaM, H, a, rhs)
+        #gauss_seidel_with_rhs(pi, b, h, C2, C4, alphaB, alphaM, H, a, rhs)
 
 
 

@@ -1,13 +1,13 @@
+import numpy as np
 import main
 import pandas as pd
 
-path = '.'
+path = './alphaMtest/'
 
 param = pd.Series({
     "theory": "eft",
     'eftlin': False,
     "alphaB0": -0.48,
-    "alphaM0": 0.0,
     "extra":'04_01',
     "nthreads": 6,
     "H0": 72,
@@ -16,18 +16,18 @@ param = pd.Series({
     "N_eff": 3.044,
     "w0": -1.0,
     "wa": 0.0,
-    "boxlen": 700,
-    "ncoarse": 8,
-    "npart": 256**3,
+    "boxlen": 656,
+    "ncoarse": 7,
+    "npart": 128**3,
     "z_start": 25,
     "seed": 42,
     "position_ICS": "center",
     "fixed_ICS": False,
     "paired_ICS": False,
     "dealiased_ICS": False,
-    "power_spectrum_file": f"{path}/pk_lcdmw7v2.dat",
+    "power_spectrum_file": f"./pk_lcdmw7v2.dat",
     "initial_conditions": "2LPT",
-    "base": f"{path}/compf-newton/",
+    #"base": f"{path}/test-alpham7/",
     "z_out": "[0]",
     "output_snapshot_format": "HDF5",
     "save_power_spectrum": "no",
@@ -38,10 +38,10 @@ param = pd.Series({
     "max_aexp_stepping": 10,
     "linear_newton_solver": "multigrid",
     "gradient_stencil_order": 7,
-    "Npre": 2,
-    "Npost": 1,
+    "Npre": 3,
+    "Npost": 2,
     "Npre_FAS": 5,
-    "Npost_FAS": 15,
+    "Npost_FAS": 5,
     "ncyc": 1,
     "domg": True,
     "epsrel": 1e-2,
@@ -50,4 +50,29 @@ param = pd.Series({
     "Om_lambda":0.742589237,
     })
 
-main.run(param)
+abs = np.arange(-0.4,0.01,0.04)
+print(abs)
+
+for alphaB in abs:
+    print(alphaB)
+    pthis = param.copy()
+    pthis['alphaM0'] = alphaB
+    pthis['base'] = f"{path}/{alphaB}/"
+    main.run(pthis)
+
+    pthis = param.copy()
+    pthis['alphaM0'] = alphaB
+    pthis['base'] = f"{path}/{alphaB}/"
+    pthis['eftlin'] = True
+    main.run(pthis)
+
+'''pthis = param.copy()
+pthis['alphaB0'] = -0.48
+pthis['theory'] = 'newton'
+pthis['base'] = f"{path}/-0.48/"
+main.run(pthis)'''
+
+# alphaBtest: alphaM = 0, alphaB varies from -0.48 to -0.04
+# alphaMtest: alphaB = -0.48, alphaM varies from -0.4 to 0
+    
+

@@ -151,7 +151,6 @@ def run(param) -> None:
             param,
             t_out[param["i_snap"] - 1],
         )  
-        h = 2**(-1*param['ncoarse'])
         
         #print('Step:',param['nsteps'],position[0],velocity[0],laplacian.operator(additional_field,h)[0])# Put None instead of potential if you do not want to use previous step
 
