@@ -80,6 +80,12 @@ def run(param) -> None:
     else:
         logging.warning("\n[bold green]FFT module: NumPy[/bold green]")
 
+    if param['theory'].casefold() == 'eft':
+        if 'scaling' not in param:
+            param['scaling'] == 'de'
+            param['nm'] = 1
+            param['nb'] = 1
+
     extra = param["theory"].casefold()
     if extra.casefold() == "fr".casefold():
         extra += f"{param['fR_logfR0']}_n{param['fR_n']}"

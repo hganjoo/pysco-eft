@@ -64,13 +64,16 @@ def generate(param: pd.Series) -> List[interp1d]:
     a = np.exp(lna)
     fac = np.ones_like(lna)
     if param["theory"].casefold() == 'eft':
+        if param['scaling'] == 'a':
+            ams = param['alphaM0']*(a)**param['nm']
+        elif param['scaling'] == 'de':
         # alphaM table
-        evt = a ** (
-                -3 * (1 + param["w0"] + param["wa"])
-            ) * np.exp(-3 * param["wa"] * (1 - a))
-        den = param["Om_m"] * a ** (-3) + param["Om_lambda"] * evt
-        oma = param['Om_m'] / (den*a**3)
-        ams = param['alphaM0']*(1 - oma) / (1 - param['Om_m'])
+            evt = a ** (
+                    -3 * (1 + param["w0"] + param["wa"])
+                ) * np.exp(-3 * param["wa"] * (1 - a))
+            den = param["Om_m"] * a ** (-3) + param["Om_lambda"] * evt
+            oma = param['Om_m'] / (den*a**3)
+            ams = param['alphaM0']*((1 - oma) / (1 - param['Om_m']))**param['nm']
         fac = np.exp(-1*cumulative_trapezoid(y = ams/a,x=a,initial=0))
     
     dlna = lna[1] - lna[0]
