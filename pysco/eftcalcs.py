@@ -42,7 +42,7 @@ def geteft(
     if param['scaling'] == 'de':
         alphaB = alphaB0*((1-om_ma) / (1-om_m))**param['nb']
         alphaM = alphaM0*((1-om_ma) / (1-om_m))**param['nm']
-        abdot = -3.0*param['nb']*(param['w0'] + (1 - a)*param['wa'])*om_ma*alphaB
+        abdot = -3.0 * param['nb'] * w * om_ma * alphaB
     elif param['scaling'] == 'a':
         alphaB = alphaB0 * (a)**param['nb']
         alphaM = alphaM0 * (a)**param['nm']
