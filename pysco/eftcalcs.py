@@ -36,7 +36,9 @@ def geteft(
 
     E = np.sqrt(param["Om_m"] * a **(-3) + param["Om_lambda"] * evt)
     om_ma = param['Om_m'] / (param["Om_m"] + param["Om_lambda"] * evt * a ** 3)
-    HdotbyH2 = -1.5*om_ma
+    w = param['w0'] + param['wa']*(1 - a)
+    HdotbyH2 = -1.5 * (1.0 + w * (1.0 - om_ma))
+    #HdotbyH2 = -1.5*om_ma
     if param['scaling'] == 'de':
         alphaB = alphaB0*((1-om_ma) / (1-om_m))**param['nb']
         alphaM = alphaM0*((1-om_ma) / (1-om_m))**param['nm']
