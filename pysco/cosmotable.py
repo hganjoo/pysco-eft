@@ -57,27 +57,51 @@ def generate(param: pd.Series) -> List[interp1d]:
     )
     param["Om_r"] = cosmo.Ogamma0 + cosmo.Onu0
     param["Om_lambda"] = cosmo.Ode0
+    
 
     z_start = 200
     a_start = 1.0 / (1 + z_start)
     lna = np.linspace(np.log(a_start), 0, 100_000)
     a = np.exp(lna)
+    E_array = cosmo.efunc(1.0 / a - 1)
+
     fac = np.ones_like(lna)
+    abv = np.zeros_like(lna)
+    amv = np.zeros_like(lna)
+    C2v = np.zeros_like(lna)
+    C4v = np.zeros_like(lna)
+    mu_phiv = np.zeros_like(lna)
     if param["theory"].casefold() == 'eft':
-        if param['scaling'] == 'a':
-            ams = param['alphaM0']*(a)**param['nm']
-        elif param['scaling'] == 'de':
-        # alphaM table
-            evt = a ** (
+        evt = a ** (
                     -3 * (1 + param["w0"] + param["wa"])
                 ) * np.exp(-3 * param["wa"] * (1 - a))
-            den = param["Om_m"] * a ** (-3) + param["Om_lambda"] * evt
-            oma = param['Om_m'] / (den*a**3)
-            ams = param['alphaM0']*((1 - oma) / (1 - param['Om_m']))**param['nm']
-        fac = np.exp(-1*cumulative_trapezoid(y = ams/a,x=a,initial=0))
+        w = param['w0'] + param['wa']*(1 - a)   
+        den = param["Om_m"] * a ** (-3) + param["Om_lambda"] * evt
+        oma = param['Om_m'] / (den*a**3)
+        if param['scaling'] == 'a':
+            amv = param['alphaM0']*(a)**param['nm']
+            abv = param['alphaB0']*(a)**param['nb']
+            abdot = param['nb']*abv
+        elif param['scaling'] == 'de':
+        # alphaM table
+            
+            amv = param['alphaM0']*((1 - oma) / (1 - param['Om_m']))**param['nm']
+            abv = param['alphaB0']*((1 - oma) / (1 - param['Om_m']))**param['nb']
+            abdot = -3.0 * param['nb'] * w * oma * abv
+        
+        fac = np.exp(-1*cumulative_trapezoid(y = amv/a,x=a,initial=0))
+        
+        HdotbyH2 = -1.5 * (1.0 + w * (1.0 - oma))
+        C2v = -1*amv + abv*(1 + amv) + (1 + abv)*HdotbyH2 + abdot + a**(-3.)*1.5*fac*param["Om_m"]/(E_array**2)
+        C4v = -4*abv + 2*amv
+        xi = abv - amv
+        nu = -1*C2v -abv*(xi - amv)
+        #mu_chi = xi/nu
+        mu_phiv = 1 + xi*xi/nu
+
+
     
     dlna = lna[1] - lna[0]
-    E_array = cosmo.efunc(1.0 / a - 1)
     dt_supercomoving = dlna / (a**2 * E_array)
     t_supercomoving = cumulative_trapezoid(dt_supercomoving, initial=0)
     t_supercomoving -= t_supercomoving[-1]
@@ -123,7 +147,12 @@ def generate(param: pd.Series) -> List[interp1d]:
         interp1d(lnaexp_growth, f3b, fill_value="extrapolate"),
         interp1d(lnaexp_growth, d3c, fill_value="extrapolate"),
         interp1d(lnaexp_growth, f3c, fill_value="extrapolate"),
-        interp1d(lna,fac,fill_value="extrapolate")
+        interp1d(lna,fac,fill_value="extrapolate"),
+        interp1d(lna,abv,fill_value="extrapolate"),
+        interp1d(lna,amv,fill_value="extrapolate"),
+        interp1d(lna,C2v,fill_value="extrapolate"),
+        interp1d(lna,C4v,fill_value="extrapolate"),
+        interp1d(lna,mu_phiv,fill_value="extrapolate"),
     ]
 
 

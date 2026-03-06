@@ -408,13 +408,17 @@ def get_additional_field(
         
         case "eft":
 
-            eft_quantities = eftcalcs.geteft(param,tables)
+            '''eft_quantities = eftcalcs.geteft(param,tables)
             param["alphaB"] = eft_quantities[0]
             param["alphaM"] = eft_quantities[1]
             param["C2"] = eft_quantities[2]
-            param["C4"] = eft_quantities[3]
+            param["C4"] = eft_quantities[3]'''
+            param["alphaB"] = np.float32(tables[14](np.log(param["aexp"])))
+            param["alphaM"] = np.float32(tables[15](np.log(param["aexp"])))
+            param["C2"] = np.float32(tables[16](np.log(param["aexp"])))
+            param["C4"] = np.float32(tables[17](np.log(param["aexp"])))
             Eval = tables[2] 
-            param["H"] = Eval(np.log(param["aexp"])) / param["H0"]
+            param["H"] = np.float32(Eval(np.log(param["aexp"])) / param["H0"])
             #param["xi"] = param["alphaB"] - param["alphaM"]
             #param["nu"] = -param["C2"] - param["alphaB"]*(param["xi"] - param["alphaM"])
             
